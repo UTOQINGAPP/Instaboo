@@ -1,5 +1,4 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/ui/shared/shared_ui.dart';

@@ -25,7 +25,8 @@ class IconState {
   Future<String?> isExistPath() async {
     final file = File(path);
     if (!(await file.exists())) return null;
-    return path;
+
+    return file.path;
   }
 }
 
