@@ -1,15 +1,15 @@
 import 'package:flutter/widgets.dart';
 
-class ChangeSizeScreenHelperConfig {
+class ChangeSizeScreenHelper {
   // Private constructor for singleton
-  ChangeSizeScreenHelperConfig._internal();
+  ChangeSizeScreenHelper._internal();
 
   // Singleton instance
-  static final ChangeSizeScreenHelperConfig _instance =
-      ChangeSizeScreenHelperConfig._internal();
+  static final ChangeSizeScreenHelper _instance =
+      ChangeSizeScreenHelper._internal();
 
   // Factory constructor to return the singleton instance
-  factory ChangeSizeScreenHelperConfig() {
+  factory ChangeSizeScreenHelper() {
     return _instance;
   }
 

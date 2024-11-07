@@ -4,9 +4,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/core/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-part 'form_logic_add_package.g.dart';
+part 'form_logic_edit_package.g.dart';
 
-class FormLogicAddPackageState {
+class FormLogicEditPackageState {
   final String iconPath;
   final String? name;
   final String? description;
@@ -14,8 +14,10 @@ class FormLogicAddPackageState {
   final int? categoryId;
   final List<int>? platformsId;
   final bool internetAccess;
+  final Directory? directory;
+  final String? executable;
 
-  FormLogicAddPackageState({
+  FormLogicEditPackageState({
     this.iconPath = appLogo,
     this.name,
     this.description,
@@ -23,9 +25,11 @@ class FormLogicAddPackageState {
     this.categoryId,
     this.platformsId,
     this.internetAccess = false,
+    this.directory,
+    this.executable,
   });
 
-  FormLogicAddPackageState copyWith({
+  FormLogicEditPackageState copyWith({
     String? iconPath,
     String? name,
     String? description,
@@ -33,8 +37,10 @@ class FormLogicAddPackageState {
     int? categoryId,
     List<int>? platformsId,
     bool? internetAccess,
+    Directory? directory,
+    String? executable,
   }) {
-    return FormLogicAddPackageState(
+    return FormLogicEditPackageState(
       iconPath: iconPath ?? this.iconPath,
       name: name ?? this.name,
       description: description ?? this.description,
@@ -42,6 +48,8 @@ class FormLogicAddPackageState {
       categoryId: categoryId ?? this.categoryId,
       platformsId: platformsId ?? this.platformsId,
       internetAccess: internetAccess ?? this.internetAccess,
+      directory: directory ?? this.directory,
+      executable: executable,
     );
   }
 
@@ -50,7 +58,9 @@ class FormLogicAddPackageState {
         description != null &&
         version != null &&
         categoryId != null &&
-        platformsId != null;
+        platformsId != null &&
+        directory != null &&
+        executable != null;
   }
 
   @override
@@ -63,15 +73,17 @@ class FormLogicAddPackageState {
         'categoryId: $categoryId, '
         'platformsId: ${platformsId != null ? platformsId.toString() : 'null'}, '
         'internetAccess: $internetAccess'
+        'directory: $directory'
+        'executable:$executable'
         ')';
   }
 }
 
 @riverpod
-class FormLogicAddPackage extends _$FormLogicAddPackage {
+class FormLogicEditPackage extends _$FormLogicEditPackage {
   @override
-  FormLogicAddPackageState build() {
-    return FormLogicAddPackageState();
+  FormLogicEditPackageState build() {
+    return FormLogicEditPackageState();
   }
 
   Future<void> updateIcon() async {
@@ -82,7 +94,7 @@ class FormLogicAddPackage extends _$FormLogicAddPackage {
       File file = File(result.files.single.path!);
       state = state.copyWith(iconPath: file.path);
     } else {
-      state = state.copyWith(iconPath: appLogo);
+      state = state.copyWith(iconPath: '');
     }
   }
 
@@ -91,34 +103,19 @@ class FormLogicAddPackage extends _$FormLogicAddPackage {
       state = state.copyWith(description: descripction);
   set updateVersion(String version) => state = state.copyWith(version: version);
   set updateCategory(int id) => state = state.copyWith(categoryId: id);
-  set updatePlatforms(List<int> id) => state = state.copyWith(platformsId: id);
+  set updatePlatforms(List<int>? id) => state = state.copyWith(platformsId: id);
   set updateInternetAccess(bool online) =>
       state = state.copyWith(internetAccess: online);
+  Future<void> updateDirectory() async {
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
 
-  Future<(PackageData? data, String? messageError)> get data async {
-    final bool validate = state.areAllFieldsNotNull();
-    if (!validate) {
-      return (null, 'El formulario no esta completo');
+    if (selectedDirectory == null) {
+      // User canceled the picker
+      return;
     }
-    final CategoryService categoryService = CategoryService.instance;
-    final PlatformService platformService = PlatformService.instance;
-    final List<PlatformData> platforms = [];
-    state.platformsId!.map((id) {
-      final PlatformData? result = platformService.getIdSync(id);
-      if (result != null) {
-        platforms.add(result);
-      }
-    });
-    if (platforms.isEmpty) {
-      return (null, 'Plataformas no encontradas');
-    }
-    final data = PackageData()
-      ..iconPath = state.iconPath
-      ..name = state.name!
-      ..description = state.description!
-      ..version = state.version!
-      ..category.value = await categoryService.getId(state.categoryId!)
-      ..platforms.addAll(platforms);
-    return (data, null);
+    state = state.copyWith(directory: Directory(selectedDirectory));
   }
+
+  set updateExecutable(String? executable) =>
+      state = state.copyWith(executable: executable);
 }

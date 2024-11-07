@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-class FormatterHelperConfig {
+class FormatterHelper {
   /// [ymd] changes the format of the datetime to ymd format.
   static DateFormat ymd = DateFormat('yyyy/MM/dd');
 

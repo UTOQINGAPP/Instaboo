@@ -5,6 +5,7 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
+import 'package:instaboo/ui/layouts/home/logic/logic_home.dart';
 import 'package:instaboo/ui/pages/pages_ui.dart';
 import 'package:instaboo/ui/shared/shared_ui.dart';
 import 'package:window_manager/window_manager.dart';
@@ -37,13 +38,13 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
   late final List<NavigationPaneItem> footerSectionView = [
     PaneItemSeparator(),
     PaneItem(
-      key: const ValueKey(AddPackagePage.link),
+      key: const ValueKey<int>(-2),
       icon: const Icon(FluentIcons.settings),
       title: const Text('Agregar paquete'),
       body: const SizedBox.shrink(),
       onTap: () {
-        if (GoRouterState.of(context).uri.toString() != AddPackagePage.link) {
-          context.push(AddPackagePage.link);
+        if (GoRouterState.of(context).uri.toString() != EditPackagePage.link) {
+          context.push(EditPackagePage.link);
         }
       },
     ),
@@ -81,8 +82,8 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
     body: const SizedBox.shrink(),
   );
 
-  PaneItemHeader categoriesSectionHeaderView =
-      PaneItemHeader(header: const Text('Categorias'));
+  PaneItemHeader categoriesSectionHeaderView = PaneItemHeader(
+      key: const ValueKey<int>(-1), header: const Text('Categorias'));
 
   @override
   Widget build(BuildContext context) {
@@ -111,16 +112,43 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
             title: item.title,
             body: item.body,
             onTap: () {
-              currentCategoryId = (item.key as ValueKey<int>).value;
-              setState(() {});
-              if (currentCategoryId == 0) {
-                context.go(SelectedPageHome.link);
-                item.onTap?.call();
-                return;
+              // final int keyValue = (item.key as ValueKey<int>).value;
+              // if (keyValue == 0) {
+              //   currentCategoryId = keyValue;
+
+              //   context.go(SelectedPageHome.link);
+              //   item.onTap?.call();
+              //   setState(() {});
+              //   return;
+              // } else if (keyValue == -1) {
+              //   return;
+              // } else {
+              //   currentCategoryId = keyValue;
+
+              //   context.go(PackagesPageHome.link, extra: currentCategoryId);
+
+              //   item.onTap?.call();
+              //   setState(() {});
+              //   return;
+              // }
+              final int keyValue = (item.key as ValueKey<int>).value;
+              if (keyValue == -1)
+                return; // Omite encabezados que no deben seleccionarse
+
+              setState(() {
+                ref
+                    .read(currentSelectedCategoryLogicHomeProvider.notifier)
+                    .update(keyValue); // Actualiza currentCategoryId
+              });
+
+              if (keyValue == 0) {
+                context.go(SelectedPageHome
+                    .link); // Navega a la página de inicio seleccionada
+              } else {
+                context.go(PackagesPageHome.link,
+                    extra:
+                        currentCategoryId); // Navega a la página correspondiente con el id actual
               }
-              context.go(PackagesPageHome.link);
-              item.onTap?.call();
-              return;
             },
           );
         }
@@ -149,7 +177,7 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
   NavigationPane _panelView(ThemeState themeLogicShared, FluentThemeData theme,
       List<NavigationPaneItem> originalItems) {
     return NavigationPane(
-      selected: currentCategoryId,
+      selected: ref.watch(currentSelectedCategoryLogicHomeProvider),
       header: Container(
         height: 120,
         margin: const EdgeInsets.only(bottom: 10),

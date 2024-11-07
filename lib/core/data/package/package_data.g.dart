@@ -22,9 +22,9 @@ const PackageDataSchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
-    r'iconPath': PropertySchema(
+    r'executable': PropertySchema(
       id: 1,
-      name: r'iconPath',
+      name: r'executable',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
@@ -77,12 +77,7 @@ int _packageDataEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.description.length * 3;
-  {
-    final value = object.iconPath;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
+  bytesCount += 3 + object.executable.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.version.length * 3;
   return bytesCount;
@@ -95,7 +90,7 @@ void _packageDataSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.description);
-  writer.writeString(offsets[1], object.iconPath);
+  writer.writeString(offsets[1], object.executable);
   writer.writeString(offsets[2], object.name);
   writer.writeBool(offsets[3], object.requiresInternet);
   writer.writeString(offsets[4], object.version);
@@ -109,7 +104,7 @@ PackageData _packageDataDeserialize(
 ) {
   final object = PackageData();
   object.description = reader.readString(offsets[0]);
-  object.iconPath = reader.readStringOrNull(offsets[1]);
+  object.executable = reader.readString(offsets[1]);
   object.id = id;
   object.name = reader.readString(offsets[2]);
   object.requiresInternet = reader.readBool(offsets[3]);
@@ -127,7 +122,7 @@ P _packageDataDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
@@ -373,30 +368,13 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'iconPath',
-      ));
-    });
-  }
-
-  QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'iconPath',
-      ));
-    });
-  }
-
-  QueryBuilder<PackageData, PackageData, QAfterFilterCondition> iconPathEqualTo(
-    String? value, {
+      executableEqualTo(
+    String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'iconPath',
+        property: r'executable',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -404,15 +382,15 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathGreaterThan(
-    String? value, {
+      executableGreaterThan(
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'iconPath',
+        property: r'executable',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -420,31 +398,32 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathLessThan(
-    String? value, {
+      executableLessThan(
+    String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'iconPath',
+        property: r'executable',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QAfterFilterCondition> iconPathBetween(
-    String? lower,
-    String? upper, {
+  QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
+      executableBetween(
+    String lower,
+    String upper, {
     bool includeLower = true,
     bool includeUpper = true,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'iconPath',
+        property: r'executable',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -455,13 +434,13 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathStartsWith(
+      executableStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'iconPath',
+        property: r'executable',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -469,13 +448,13 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathEndsWith(
+      executableEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'iconPath',
+        property: r'executable',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -483,22 +462,21 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathContains(String value, {bool caseSensitive = true}) {
+      executableContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'iconPath',
+        property: r'executable',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QAfterFilterCondition> iconPathMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
+  QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
+      executableMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'iconPath',
+        property: r'executable',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
@@ -506,20 +484,20 @@ extension PackageDataQueryFilter
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathIsEmpty() {
+      executableIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'iconPath',
+        property: r'executable',
         value: '',
       ));
     });
   }
 
   QueryBuilder<PackageData, PackageData, QAfterFilterCondition>
-      iconPathIsNotEmpty() {
+      executableIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'iconPath',
+        property: r'executable',
         value: '',
       ));
     });
@@ -949,15 +927,15 @@ extension PackageDataQuerySortBy
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QAfterSortBy> sortByIconPath() {
+  QueryBuilder<PackageData, PackageData, QAfterSortBy> sortByExecutable() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'iconPath', Sort.asc);
+      return query.addSortBy(r'executable', Sort.asc);
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QAfterSortBy> sortByIconPathDesc() {
+  QueryBuilder<PackageData, PackageData, QAfterSortBy> sortByExecutableDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'iconPath', Sort.desc);
+      return query.addSortBy(r'executable', Sort.desc);
     });
   }
 
@@ -1014,15 +992,15 @@ extension PackageDataQuerySortThenBy
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QAfterSortBy> thenByIconPath() {
+  QueryBuilder<PackageData, PackageData, QAfterSortBy> thenByExecutable() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'iconPath', Sort.asc);
+      return query.addSortBy(r'executable', Sort.asc);
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QAfterSortBy> thenByIconPathDesc() {
+  QueryBuilder<PackageData, PackageData, QAfterSortBy> thenByExecutableDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'iconPath', Sort.desc);
+      return query.addSortBy(r'executable', Sort.desc);
     });
   }
 
@@ -1086,10 +1064,10 @@ extension PackageDataQueryWhereDistinct
     });
   }
 
-  QueryBuilder<PackageData, PackageData, QDistinct> distinctByIconPath(
+  QueryBuilder<PackageData, PackageData, QDistinct> distinctByExecutable(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'iconPath', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'executable', caseSensitive: caseSensitive);
     });
   }
 
@@ -1129,9 +1107,9 @@ extension PackageDataQueryProperty
     });
   }
 
-  QueryBuilder<PackageData, String?, QQueryOperations> iconPathProperty() {
+  QueryBuilder<PackageData, String, QQueryOperations> executableProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'iconPath');
+      return query.addPropertyName(r'executable');
     });
   }
 

@@ -18,7 +18,11 @@ import 'package:instaboo/ui/shared/shared_ui.dart';
 class PackagesPageHome extends ConsumerWidget {
   static const String link = '/home/packages';
   static const String name = 'packages';
-  const PackagesPageHome({super.key});
+  final int idCategory;
+  const PackagesPageHome({
+    super.key,
+    required this.idCategory,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

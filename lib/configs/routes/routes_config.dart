@@ -9,10 +9,13 @@ GoRouter routerConfig =
 final List<RouteBase> _routes = [
   _homeRoutes,
   GoRoute(
-    path: AddPackagePage.link,
-    name: AddPackagePage.name,
+    path: EditPackagePage.link,
+    name: EditPackagePage.name,
     pageBuilder: (context, state) {
-      return FluentPage(child: AddPackagePage());
+      return FluentPage(
+          child: EditPackagePage(
+        title: 'Agregar paquete',
+      ));
     },
   ),
 ];
@@ -26,7 +29,8 @@ final RouteBase _homeRoutes = StatefulShellRoute.indexedStack(
       GoRoute(
         path: PackagesPageHome.link,
         name: PackagesPageHome.name,
-        builder: (context, state) => const PackagesPageHome(),
+        builder: (context, state) =>
+            PackagesPageHome(idCategory: state.extra as int),
       ),
     ]),
     StatefulShellBranch(routes: [

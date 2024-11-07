@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-extension ScreenSizeHelperConfig on BuildContext {
+extension ScreenSizeHelper on BuildContext {
   /// Returns a dynamic width depending on a percentage from 0-100% [width].
   double width(double percentage) {
     if (percentage <= 0.0 || percentage > 100.1) {

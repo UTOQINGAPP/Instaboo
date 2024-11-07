@@ -5,20 +5,28 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/core/core.dart';
-import 'package:instaboo/ui/pages/add_package/logic/form/form_logic_add_package.dart';
+import 'package:instaboo/ui/pages/edit_package/logic/form/form_logic_edit_package.dart';
+import 'package:instaboo/ui/shared/logic/packages/package_logic_shared.dart';
 import 'package:instaboo/ui/shared/shared_ui.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:path/path.dart' as path;
 
-class AddPackagePage extends ConsumerStatefulWidget {
+class EditPackagePage extends ConsumerStatefulWidget {
   static const String link = '/package/add';
   static const String name = 'package-add';
-  const AddPackagePage({super.key});
+  final String title;
+  final PackageData? package;
+  const EditPackagePage({
+    super.key,
+    required this.title,
+    this.package,
+  });
 
   @override
-  ConsumerState<AddPackagePage> createState() => _AddPackagePageState();
+  ConsumerState<EditPackagePage> createState() => _AddPackagePageState();
 }
 
-class _AddPackagePageState extends ConsumerState<AddPackagePage>
+class _AddPackagePageState extends ConsumerState<EditPackagePage>
     with WindowListener {
   @override
   void initState() {
@@ -34,85 +42,199 @@ class _AddPackagePageState extends ConsumerState<AddPackagePage>
     super.dispose();
   }
 
+  Future<(PackageData? data, String? messageError)>
+      _generatePackageDBLogic() async {
+    final FormLogicEditPackageState formLogicEditPackageState =
+        ref.read(formLogicEditPackageProvider);
+    final bool validate = formLogicEditPackageState.areAllFieldsNotNull();
+    //print(state.platformsId.toString());
+    if (!validate) {
+      return (null, 'El formulario no esta completo');
+    }
+    final CategoryService categoryService = CategoryService.instance;
+    final PlatformService platformService = PlatformService.instance;
+    List<PlatformData> platforms = [];
+
+    formLogicEditPackageState.platformsId?.map((id) {});
+    if (formLogicEditPackageState.platformsId == null) {
+      return (null, 'Plataformas no encontradas');
+    }
+    for (var id in formLogicEditPackageState.platformsId!) {
+      final PlatformData? result = platformService.getIdSync(id);
+
+      if (result != null) {
+        platforms.add(result);
+      }
+    }
+    if (platforms.isEmpty) {
+      return (null, 'Plataformas no encontradas');
+    }
+    final data = PackageData()
+      ..name = formLogicEditPackageState.name!
+      ..description = formLogicEditPackageState.description!
+      ..version = formLogicEditPackageState.version!
+      ..category.value =
+          await categoryService.getId(formLogicEditPackageState.categoryId!)
+      ..platforms.addAll(platforms)
+      ..requiresInternet = formLogicEditPackageState.internetAccess
+      ..executable = formLogicEditPackageState.executable!;
+    return (data, null);
+  }
+
+  Future<(Directory?, NotificationsModelShared?)> _copyFilesPackage(
+      int idPackage) async {
+    final FormLogicEditPackageState formLogicEditPackageState =
+        ref.read(formLogicEditPackageProvider);
+    final iconCopy = await IoHelper.copyIcon(
+        sourcePath: formLogicEditPackageState.iconPath,
+        idPackage: idPackage.toString());
+    final PackageData? packageData =
+        await ref.read(packageServiceLogicSharedProvider).getId(idPackage);
+    if (packageData == null) {
+      return (
+        null,
+        NotificationsModelShared(
+            title: 'Error :/',
+            message: 'El paquete no pudo registrarse.',
+            severity: InfoBarSeverity.error)
+      );
+    }
+    final Directory? directoryPackageSource =
+        formLogicEditPackageState.directory;
+    if (directoryPackageSource == null) {
+      return (
+        null,
+        NotificationsModelShared(
+            title: 'Aviso :/',
+            message: 'Seleccione el directorio fuente del paquete.')
+      );
+    }
+    if (!(await directoryPackageSource.exists())) {
+      return (
+        null,
+        NotificationsModelShared(
+            title: 'Error :/',
+            message: 'No existe el directorio seleccionado.',
+            severity: InfoBarSeverity.error)
+      );
+    }
+    final directoryCopy = await IoHelper.copyPackage(
+        directoryPackageSource.path, idPackage.toString());
+    if (directoryCopy.$1 == null) {
+      return (
+        null,
+        NotificationsModelShared(
+            title: 'Error :/',
+            message: directoryCopy.$2!,
+            severity: InfoBarSeverity.error)
+      );
+    }
+    return (Directory(directoryCopy.$1!), null);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // final themeLogicShared = ref.watch(themeLogicSharedProvider);
-    final theme = FluentTheme.of(context);
-
     return NavigationView(
       appBar: NavigationAppBar(
         title: () {
-          const title = Text('NavigationView');
+          Text title = Text(widget.title);
 
-          return const DragToMoveArea(child: title);
+          return DragToMoveArea(
+              child: SizedBox(width: double.infinity, child: title));
         }(),
         leading: IconButton(
           icon: const Icon(FluentIcons.back),
           onPressed: () => context.pop(),
         ),
-      ),
-      content: Column(
-        children: [
-          _barTitleView(),
-          const Expanded(
-            child: Row(
-              children: [
-                _IconPackageView(),
-                _FormPackageView(),
-              ],
-            ),
-          ),
-          _barOptionsView(context),
-        ],
-      ),
-    );
-  }
-
-  DragToMoveArea _barTitleView() {
-    return const DragToMoveArea(
-      child: SizedBox(
-        width: double.infinity,
-        height: 30,
-        child: Center(
-          child: Text('Agregar Paquete'),
-        ),
-      ),
-    );
-  }
-
-  Padding _barOptionsView(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Row(
-        children: [
-          Button(
-            style: ButtonStyle(
-              backgroundColor:
-                  WidgetStatePropertyAll(Colors.red.withOpacity(.8)),
-            ),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Colors.white),
-            ),
-            onPressed: () {
-              context.pop();
-            },
-          ),
-          const Spacer(),
-          FilledButton(
+        actions: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: FilledButton(
             child: const Text('Agregar'),
             onPressed: () async {
-              print(ref.read(formLogicAddPackageProvider).toString());
+              final (PackageData?, String?) resultGeneratePackage =
+                  await _generatePackageDBLogic();
+              if (resultGeneratePackage.$1 == null) {
+                print(resultGeneratePackage.$2);
+                if (context.mounted) {
+                  await notificationsShared(
+                    context,
+                    model: NotificationsModelShared(
+                        title: 'Aviso :/', message: resultGeneratePackage.$2!),
+                  );
+                }
+                return;
+              }
+              final PackageData data = resultGeneratePackage.$1!;
+              final int idResult =
+                  await ref.read(packageServiceLogicSharedProvider).add(data);
+              final PackageData? dataResult = await ref
+                  .read(packageServiceLogicSharedProvider)
+                  .getId(idResult);
+
+              if (dataResult == null) {
+                return;
+              }
+              final (Directory?, NotificationsModelShared?) resultCopyFiles =
+                  await _copyFilesPackage(dataResult.id);
+              if (resultCopyFiles.$1 == null && context.mounted) {
+                await notificationsShared(context, model: resultCopyFiles.$2!);
+                return;
+              }
+              final String? resultCreateHashes =
+                  await HashesJsonHelper.saveHashes(
+                      directoryPath: resultCopyFiles.$1!.path,
+                      packageId: dataResult.id.toString());
+              if (resultCreateHashes != null && context.mounted) {
+                await notificationsShared(
+                  context,
+                  model: NotificationsModelShared(
+                      title: 'Error :/',
+                      message: resultCreateHashes,
+                      severity: InfoBarSeverity.error),
+                );
+                return;
+              }
+              if (context.mounted) {
+                context.pop();
+              }
+
+              //HashesJsonHelper.checkHashes();
             },
           ),
+        ),
+      ),
+      content: Row(
+        children: [
+          _FilesPackageView(),
+          _FormPackageView(),
         ],
       ),
     );
   }
 }
 
-class _IconPackageView extends ConsumerWidget {
-  const _IconPackageView();
+class _FilesPackageView extends HookConsumerWidget {
+  const _FilesPackageView();
+
+  List<String> contentDirectoryLogic(WidgetRef ref) {
+    final Directory? directory =
+        ref.watch(formLogicEditPackageProvider).directory;
+    if (directory == null) {
+      return [];
+    }
+    if (!directory.existsSync()) {
+      return [];
+    }
+    final List<FileSystemEntity> entities = directory.listSync();
+    final files = entities
+        .whereType<File>()
+        .map((entity) => path.basename(entity.path))
+        .toList();
+    if (files.isEmpty) {
+      return [];
+    }
+    return files;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -124,14 +246,14 @@ class _IconPackageView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ref.watch(formLogicAddPackageProvider).iconPath.contains('assets')
+            !(ref.watch(formLogicEditPackageProvider).iconPath.contains(''))
                 ? Image.asset(
-                    ref.watch(formLogicAddPackageProvider).iconPath,
+                    appLogo,
                     height: 300,
                     width: 300,
                   )
                 : Image.file(
-                    File(ref.watch(formLogicAddPackageProvider).iconPath),
+                    File(ref.watch(formLogicEditPackageProvider).iconPath),
                     fit: BoxFit.cover,
                     height: 300,
                     width: 300,
@@ -144,10 +266,57 @@ class _IconPackageView extends ConsumerWidget {
               child: const Text('Cambiar icono'),
               onPressed: () async {
                 await ref
-                    .read(formLogicAddPackageProvider.notifier)
+                    .read(formLogicEditPackageProvider.notifier)
                     .updateIcon();
                 //todo:agregar funcionalidad change icon
               },
+            ),
+            SizedBox(height: 10),
+            Divider(),
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: InfoLabel(
+                label: 'Seleccione el directorio del paquete a agregar (*):',
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ComboBox<String>(
+                        value:
+                            ref.watch(formLogicEditPackageProvider).executable,
+                        items: contentDirectoryLogic(ref)
+                            .map<ComboBoxItem<String>>((file) {
+                          return ComboBoxItem<String>(
+                            value: file,
+                            child: Text(file),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          ref
+                              .read(formLogicEditPackageProvider.notifier)
+                              .updateExecutable = value;
+                        },
+                        //                 disabled
+                        // ? null
+                        // : (color) {
+                        //     setState(() => selectedCat = color);
+                        //   }
+                        placeholder:
+                            const Text('Seleccione el ejecutable (*.exe)'),
+                      ),
+                    ),
+                    SizedBox(width: 5),
+                    Button(
+                      child: const Text('Subir'),
+                      onPressed: () async {
+                        ref
+                            .read(formLogicEditPackageProvider.notifier)
+                            .updateDirectory();
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -159,7 +328,7 @@ class _IconPackageView extends ConsumerWidget {
 class _FormPackageView extends HookConsumerWidget {
   const _FormPackageView();
 
-  Future<String> _addNewCategoryLogic(BuildContext context,
+  Future<String?> _addNewCategoryLogic(BuildContext context,
       {required WidgetRef ref, required String category}) async {
     try {
       if (category.isEmpty) {
@@ -168,15 +337,25 @@ class _FormPackageView extends HookConsumerWidget {
       final String? result = await ref
           .read(categoryLogicSharedProvider.notifier)
           .add(CategoryData()..name = category);
-      if (result == null) {
+
+      if (result != null) {
         throw Exception(result);
+      }
+      if (context.mounted) {
+        notificationsShared(
+          context,
+          model: NotificationsModelShared(
+              title: 'Aviso :)',
+              message: 'Nueva categoria agregada correctamente.',
+              severity: InfoBarSeverity.success),
+        );
       }
       return result;
     } catch (e) {
       if (context.mounted) {
         _showErrorDialog(context, e.toString());
       }
-      return '';
+      return null;
     }
   }
 
@@ -189,10 +368,9 @@ class _FormPackageView extends HookConsumerWidget {
           await ref.read(categoryLogicSharedProvider.notifier).getId(id);
       if (category == null) {
         return;
-        //throw Exception(errorSearchCategory);
       }
 
-      ref.read(formLogicAddPackageProvider.notifier).updateCategory =
+      ref.read(formLogicEditPackageProvider.notifier).updateCategory =
           category.id;
     } catch (e) {
       if (context.mounted) {
@@ -229,7 +407,7 @@ class _FormPackageView extends HookConsumerWidget {
     searchFocusNode = useFocusNode();
     List<PlatformData> platforms = ref.watch(platformLogicSharedProvider);
     ValueNotifier<List<int>> listCategories = useState(<int>[]);
-    ValueNotifier<bool> selectedAllPlatforms = useState(false);
+
     return Container(
       height: double.infinity,
       width: context.width(70),
@@ -246,7 +424,7 @@ class _FormPackageView extends HookConsumerWidget {
                 if (value.isEmpty) {
                   return;
                 }
-                ref.read(formLogicAddPackageProvider.notifier).updateName =
+                ref.read(formLogicEditPackageProvider.notifier).updateName =
                     value;
               },
             ),
@@ -262,7 +440,7 @@ class _FormPackageView extends HookConsumerWidget {
                   return;
                 }
                 ref
-                    .read(formLogicAddPackageProvider.notifier)
+                    .read(formLogicEditPackageProvider.notifier)
                     .updateDescription = value;
               },
             ),
@@ -277,7 +455,7 @@ class _FormPackageView extends HookConsumerWidget {
                 if (value.isEmpty) {
                   return;
                 }
-                ref.read(formLogicAddPackageProvider.notifier).updateVersion =
+                ref.read(formLogicEditPackageProvider.notifier).updateVersion =
                     value;
               },
             ),
@@ -333,10 +511,13 @@ class _FormPackageView extends HookConsumerWidget {
                           child: Button(
                             child: Text('Seleccionar y agregar categoria'),
                             onPressed: () async => selectedCategoryController
-                                    .text =
-                                await (_addNewCategoryLogic(context,
-                                    ref: ref,
-                                    category: selectedCategoryController.text)),
+                                .text = await (_addNewCategoryLogic(context,
+                                        ref: ref,
+                                        category:
+                                            selectedCategoryController.text)) ==
+                                    null
+                                ? selectedCategoryController.text
+                                : '',
                           ),
                         ),
                       ],
@@ -423,9 +604,13 @@ class _FormPackageView extends HookConsumerWidget {
                                 checked.value = false;
                               }
                             }
+                            //print(listCategories.value.toString());
                             ref
-                                .read(formLogicAddPackageProvider.notifier)
-                                .updatePlatforms = listCategories.value;
+                                    .read(formLogicEditPackageProvider.notifier)
+                                    .updatePlatforms =
+                                listCategories.value.isEmpty
+                                    ? null
+                                    : listCategories.value;
                           },
                         );
                       },
@@ -441,10 +626,10 @@ class _FormPackageView extends HookConsumerWidget {
             child: Card(
               child: Checkbox(
                 key: ValueKey(
-                    ref.watch(formLogicAddPackageProvider).internetAccess),
-                checked: ref.watch(formLogicAddPackageProvider).internetAccess,
+                    ref.watch(formLogicEditPackageProvider).internetAccess),
+                checked: ref.watch(formLogicEditPackageProvider).internetAccess,
                 onChanged: (value) => ref
-                    .read(formLogicAddPackageProvider.notifier)
+                    .read(formLogicEditPackageProvider.notifier)
                     .updateInternetAccess = value!,
                 content: const Text('Solicitar acceso a internet'),
               ),
