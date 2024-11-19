@@ -3,6 +3,8 @@ import 'package:instaboo/core/data/platform/platform_data.dart';
 import 'package:isar/isar.dart';
 part 'package_data.g.dart';
 
+// Describes PackageData as a model for storing package information in an Isar database.
+
 @collection
 class PackageData {
   Id id = Isar.autoIncrement;

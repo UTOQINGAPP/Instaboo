@@ -1,6 +1,11 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show Material;
 
+// PlatformCardComponentShared is a reusable widget that displays a card containing an icon and a platform name.
+// It uses Fluent UI for design consistency, with a Material wrapper to ensure compatibility across platforms.
+// The card is compact, making it suitable for displaying platform details in a list or grid.
+
+
 class PlatformCardComponentShared extends StatelessWidget {
   final IconData icon;
   final String name;

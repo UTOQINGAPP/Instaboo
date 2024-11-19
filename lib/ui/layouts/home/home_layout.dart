@@ -1,16 +1,24 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart' show showAboutDialog;
 import 'package:flutter_acrylic/flutter_acrylic.dart';
-
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/ui/layouts/home/logic/logic_home.dart';
 import 'package:instaboo/ui/pages/pages_ui.dart';
 import 'package:instaboo/ui/shared/shared_ui.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:window_manager/window_manager.dart';
 import 'pages/pages_home.dart';
 export 'pages/pages_home.dart';
+
+// HomeLayout is the primary layout widget for the application's main interface. 
+// It integrates Fluent UI for a Windows-like experience, featuring a navigation pane, 
+// dynamic theming, and search functionality. The layout manages categories and packages, 
+// supports routing through GoRouter, and includes window management with Acrylic effects. 
+// It also provides functionality for window interactions, such as confirmation dialogs 
+// before closing the application.
+
 
 class HomeLayout extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -64,6 +72,16 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
             WindowEffect.acrylic, micaBackgroundColor, isDarkMode);
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) async{
+      if (context.mounted) {
+       acceptDialogShared(context, model: AcceptDialogModelShared(title: 'Terminos y Condiciones', content: SfPdfViewer.asset(
+        termsAndConditionsInstaboo,
+        scrollDirection: PdfScrollDirection.vertical, 
+        enableDoubleTapZooming: true, 
+      
+             ),),);
+      }
+    });
   }
 
   @override
@@ -112,28 +130,10 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
             title: item.title,
             body: item.body,
             onTap: () {
-              // final int keyValue = (item.key as ValueKey<int>).value;
-              // if (keyValue == 0) {
-              //   currentCategoryId = keyValue;
-
-              //   context.go(SelectedPageHome.link);
-              //   item.onTap?.call();
-              //   setState(() {});
-              //   return;
-              // } else if (keyValue == -1) {
-              //   return;
-              // } else {
-              //   currentCategoryId = keyValue;
-
-              //   context.go(PackagesPageHome.link, extra: currentCategoryId);
-
-              //   item.onTap?.call();
-              //   setState(() {});
-              //   return;
-              // }
               final int keyValue = (item.key as ValueKey<int>).value;
-              if (keyValue == -1)
-                return; // Omite encabezados que no deben seleccionarse
+              if (keyValue == -1) {
+                return;
+              }
 
               setState(() {
                 ref
@@ -147,7 +147,7 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
               } else {
                 context.go(PackagesPageHome.link,
                     extra:
-                        currentCategoryId); // Navega a la página correspondiente con el id actual
+                        keyValue); // Navega a la página correspondiente con el id actual
               }
             },
           );
@@ -367,7 +367,7 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
             ),
           ),
         ),
-        const WindowButtons(),
+        const WindownButtonComponentShared(),
       ]),
     );
   }
@@ -405,20 +405,4 @@ class _HomeLayoutState extends ConsumerState<HomeLayout> with WindowListener {
   }
 }
 
-class WindowButtons extends StatelessWidget {
-  const WindowButtons({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    final FluentThemeData theme = FluentTheme.of(context);
-
-    return SizedBox(
-      width: 138,
-      height: 50,
-      child: WindowCaption(
-        brightness: theme.brightness,
-        backgroundColor: Colors.transparent,
-      ),
-    );
-  }
-}

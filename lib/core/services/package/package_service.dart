@@ -3,6 +3,11 @@ import 'package:instaboo/core/data/data.dart';
 import 'package:instaboo/core/services/isar_db/isar_db_service.dart';
 import 'package:isar/isar.dart';
 
+// PackageService is a singleton class that manages CRUD operations for PackageData in the Isar database.
+// It provides methods to add, edit, delete, and retrieve packages, while ensuring platform and category relationships are maintained.
+// The service uses write transactions to ensure data consistency and offers both synchronous and asynchronous data retrieval options.
+
+
 class PackageService {
   // Instancia Singleton
   static final PackageService _instance = PackageService._internal();

@@ -4,6 +4,11 @@ import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/ui/shared/shared_ui.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
 
+// The App class is the main entry point of the Fluent UI application, designed with Riverpod for state management.
+// It sets up theming, localization, and routing for the application, with dynamic theme support for light and dark modes.
+// The application also integrates Fluent UI design principles and leverages acrylic window effects for enhanced visuals.
+
+
 class App extends ConsumerStatefulWidget {
   const App({super.key});
 

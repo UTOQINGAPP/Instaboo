@@ -6,6 +6,8 @@ project(instaboo LANGUAGES CXX)
 # the on-disk name of your application.
 set(BINARY_NAME "instaboo")
 
+
+
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
 cmake_policy(VERSION 3.14...3.25)
@@ -51,6 +53,7 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
+
 
 
 # Generated plugin build rules, which manage building the plugins and adding

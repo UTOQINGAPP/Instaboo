@@ -3,6 +3,12 @@ import 'package:instaboo/core/core.dart';
 import 'package:instaboo/ui/shared/components/container/image_component_shared.dart';
 import 'package:instaboo/ui/shared/components/container/platform_card_component_shared.dart';
 
+// PackageComponentShared is a reusable widget for displaying detailed information about a software package.
+// It shows the package's icon, name, version, description, category, internet requirement, and compatible platforms.
+// The widget supports selecting packages using a checkbox and provides a context menu (flyout) with edit and delete options.
+// It leverages Fluent UI for styling and supports dynamic color theming for the package title.
+
+
 class PackageComponentShared extends StatefulWidget {
   const PackageComponentShared({
     super.key,
@@ -15,6 +21,10 @@ class PackageComponentShared extends StatefulWidget {
     required this.titleColor,
     this.onSelected,
     this.flyouts = true,
+    required this.category,
+    this.selected = false,
+    this.onEdit,
+    this.onDelete,
   });
   final ImageComponentShared image;
   final String name;
@@ -22,33 +32,49 @@ class PackageComponentShared extends StatefulWidget {
   final String version;
   final List<PlatformData> platforms;
   final String requiresInternet;
+  final String category;
   final Color titleColor;
   final bool flyouts;
+  final bool selected;
   final void Function(bool? value)? onSelected;
+  final void Function()? onEdit;
+  final void Function()? onDelete;
 
   @override
   State<PackageComponentShared> createState() => _PackageComponentSharedState();
 }
 
 class _PackageComponentSharedState extends State<PackageComponentShared> {
-  bool state = false;
+  late bool state;
   final contextController = FlyoutController();
   final contextAttachKey = GlobalKey();
+
+  @override
+  void initState() {
+    state = widget.selected;
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onSecondaryTapUp: (d) {
-        // This calculates the position of the flyout according to the parent navigator
         final targetContext = contextAttachKey.currentContext;
         if (targetContext == null) return;
-        final box = targetContext.findRenderObject() as RenderBox;
+
+        final box = targetContext.findRenderObject() as RenderBox?;
+        if (box == null) return;
+
         final position = box.localToGlobal(
           d.localPosition,
-          ancestor: Navigator.of(context).context.findRenderObject(),
+          ancestor: context.findRenderObject()
+              as RenderBox?, // Cambia al contexto del widget actual
         );
+
         if (!widget.flyouts) {
           return;
         }
+
         contextController.showFlyout(
           barrierColor: Colors.black.withOpacity(0.1),
           position: position,
@@ -64,12 +90,12 @@ class _PackageComponentSharedState extends State<PackageComponentShared> {
                     CommandBarButton(
                       icon: const Icon(FluentIcons.edit),
                       label: const Text('Editar'),
-                      onPressed: () {},
+                      onPressed: widget.onEdit,
                     ),
                     CommandBarButton(
                       icon: const Icon(FluentIcons.delete),
                       label: const Text('Eliminar'),
-                      onPressed: () {},
+                      onPressed: widget.onDelete,
                     ),
                   ],
                 ),
@@ -130,6 +156,20 @@ class _PackageComponentSharedState extends State<PackageComponentShared> {
                   ),
                 ],
               ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Categoria:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 5),
+                  Text(
+                    widget.category,
+                    style: TextStyle(fontWeight: FontWeight.w100),
+                  ),
+                ],
+              ),
               Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,19 +205,23 @@ class _PackageComponentSharedState extends State<PackageComponentShared> {
                   ),
                   Text(
                     widget.description,
+                    maxLines: 3,
                     style: TextStyle(fontWeight: FontWeight.w300),
                   ),
                 ],
               ),
             ],
           ),
-          trailing: Checkbox(
-            checked: state,
-            content: Text('Selecionar'),
-            onChanged: (bool? value) {
-              setState(() => state = value!);
-              widget.onSelected?.call(state);
-            },
+          trailing: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Checkbox(
+              checked: state,
+              content: Text('Selecionar'),
+              onChanged: (bool? value) {
+                setState(() => state = value!);
+                widget.onSelected?.call(state);
+              },
+            ),
           ),
         ),
       ),

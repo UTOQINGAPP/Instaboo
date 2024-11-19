@@ -7,7 +7,7 @@ part of 'selected_logic_shared.dart';
 // **************************************************************************
 
 String _$selectedPackageLogicSharedHash() =>
-    r'32bd8d15734093dfbce04d13ae0dce5c19e4a4df';
+    r'dc94e44e65c59d7345c8be71182aacfb584a3adb';
 
 /// See also [SelectedPackageLogicShared].
 @ProviderFor(SelectedPackageLogicShared)

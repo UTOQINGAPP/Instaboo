@@ -3,6 +3,11 @@ import 'package:instaboo/core/data/data.dart';
 import 'package:instaboo/core/services/isar_db/isar_db_service.dart';
 import 'package:isar/isar.dart';
 
+
+// CategoryService is a singleton class that provides methods to manage category data in an Isar database.
+// It includes operations for adding, editing, deleting, and retrieving categories, 
+// with built-in validation to ensure data consistency and uniqueness.
+
 class CategoryService {
   // Instancia Singleton
   static final CategoryService _instance = CategoryService._internal();

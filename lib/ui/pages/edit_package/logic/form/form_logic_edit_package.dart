@@ -1,10 +1,15 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:instaboo/configs/configs.dart';
-import 'package:instaboo/core/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'form_logic_edit_package.g.dart';
+
+// FormLogicEditPackage manages the state and logic for editing or creating a package form.
+// It uses Riverpod for state management and provides methods to update various form fields,
+// such as package name, description, version, category, platforms, and executable path.
+// The class includes file handling methods for selecting an icon and a source directory,
+// while ensuring all required fields are validated before submission.
+
 
 class FormLogicEditPackageState {
   final String iconPath;
@@ -108,14 +113,36 @@ class FormLogicEditPackage extends _$FormLogicEditPackage {
       state = state.copyWith(internetAccess: online);
   Future<void> updateDirectory() async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-
-    if (selectedDirectory == null) {
-      // User canceled the picker
-      return;
+    if(selectedDirectory!=null){
+       state = state.copyWith(directory: Directory(selectedDirectory));
     }
-    state = state.copyWith(directory: Directory(selectedDirectory));
+   
   }
 
   set updateExecutable(String? executable) =>
       state = state.copyWith(executable: executable);
+
+  void setAllAttributes({
+    String? iconPath,
+    String? name,
+    String? description,
+    String? version,
+    int? categoryId,
+    List<int>? platformsId,
+    bool? internetAccess,
+    Directory? directory,
+    String? executable,
+  }) {
+    state = state.copyWith(
+      iconPath: iconPath,
+      name: name,
+      description: description,
+      version: version,
+      categoryId: categoryId,
+      platformsId: platformsId,
+      internetAccess: internetAccess,
+      directory: directory,
+      executable: executable,
+    );
+  }
 }

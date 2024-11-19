@@ -1,5 +1,14 @@
+
+// This file contains constant values used throughout the application:
+// - `appTitle`: The title of the application.
+// - `appLogo`: Path to the application logo asset.
+// - `appVersion`: Current version of the application, labeled as beta.
+// - `appLicense`: The license text for the application, based on the MIT License.
+// - `addCategoryKey`: A constant key used for identifying or referencing the "add category" feature.
+// - `terms_and_Conditions_Instaboo`: Path to the application's terms and conditions PDF file.
+
 const String appTitle = 'Instaboo';
-const String appLogo = 'assets/images/instaboo_logo.png';
+const String appLogo = 'assets/icon/icon.png';
 const String appVersion = '0.0.1 beta';
 const String appLicense = '''
 Copyright 2024 UTOQING APP
@@ -12,3 +21,5 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
   ''';
 
 const String addCategoryKey = 'add-category';
+
+const String termsAndConditionsInstaboo ='assets/files/terminos_y_condiciones_instaboo.pdf';

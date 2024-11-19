@@ -6,7 +6,9 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_acrylic
   isar_flutter_libs
   screen_retriever
+  syncfusion_pdfviewer_windows
   system_theme
+  url_launcher_windows
   window_manager
 )
 

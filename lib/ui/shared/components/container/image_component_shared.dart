@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+// ImageComponentShared is a reusable widget that displays an image from either a local asset or a file.
+// It adapts to different image sources dynamically and provides default styling such as width, height, and fit.
+// If the provided image source is invalid or unsupported, it shows a placeholder with a "not supported" icon.
+
+
 class ImageComponentShared extends StatelessWidget {
   final dynamic imageSource; // Puede ser String (asset) o File (local)
   final double width;

@@ -7,7 +7,7 @@ part of 'form_logic_edit_package.dart';
 // **************************************************************************
 
 String _$formLogicEditPackageHash() =>
-    r'0ffa1065c8dcff1b3b665b4d7783baa77712c197';
+    r'4c28d0c3148a478e0fe1a6b6ff99aa21d6a8f111';
 
 /// See also [FormLogicEditPackage].
 @ProviderFor(FormLogicEditPackage)

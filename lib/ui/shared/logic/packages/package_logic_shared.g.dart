@@ -24,7 +24,7 @@ final packageServiceLogicSharedProvider =
 
 typedef PackageServiceLogicSharedRef = AutoDisposeProviderRef<PackageService>;
 String _$packageListLogicSharedHash() =>
-    r'015bae9b55c0a307941976c5e2a024d08caae512';
+    r'6fe84fcb4bccb641573bcba11bf31176b5d69506';
 
 /// See also [PackageListLogicShared].
 @ProviderFor(PackageListLogicShared)

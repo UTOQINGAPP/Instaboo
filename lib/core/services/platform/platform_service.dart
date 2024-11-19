@@ -3,6 +3,12 @@ import 'package:instaboo/core/data/data.dart';
 import 'package:instaboo/core/services/isar_db/isar_db_service.dart';
 import 'package:isar/isar.dart';
 
+// PlatformService is a singleton class that manages CRUD operations for PlatformData in the Isar database.
+// It provides methods to add, edit, delete, and retrieve platform records, both synchronously and asynchronously.
+// Additionally, it includes functionality to set default platforms, ensuring common Windows platforms are preloaded.
+// The service uses write transactions to maintain data consistency and logs actions in debug mode.
+
+
 class PlatformService {
   // Instancia Singleton
   static final PlatformService _instance = PlatformService._internal();

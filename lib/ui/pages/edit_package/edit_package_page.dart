@@ -5,11 +5,17 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/core/core.dart';
-import 'package:instaboo/ui/pages/edit_package/logic/form/form_logic_edit_package.dart';
-import 'package:instaboo/ui/shared/logic/packages/package_logic_shared.dart';
+import 'package:instaboo/ui/pages/edit_package/logic/logic_add_package.dart';
 import 'package:instaboo/ui/shared/shared_ui.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as path;
+
+// EditPackagePage is a consumer stateful widget for creating or editing a software package. 
+// It provides a form for entering package details, selecting compatible platforms, and associating a category.
+// Users can also upload an icon and select a source directory for the package files.
+// The page integrates with Riverpod for state management, Fluent UI for design, and window management for desktop-style behavior.
+// The form validates inputs, handles file copying, and saves package data to the database.
+
 
 class EditPackagePage extends ConsumerStatefulWidget {
   static const String link = '/package/add';
@@ -88,6 +94,15 @@ class _AddPackagePageState extends ConsumerState<EditPackagePage>
     final iconCopy = await IoHelper.copyIcon(
         sourcePath: formLogicEditPackageState.iconPath,
         idPackage: idPackage.toString());
+    if (iconCopy.$1 == null) {
+      return (
+        null,
+        NotificationsModelShared(
+            title: 'Error :/',
+            message: 'El Icono no se pudo registrar.',
+            severity: InfoBarSeverity.error)
+      );
+    }
     final PackageData? packageData =
         await ref.read(packageServiceLogicSharedProvider).getId(idPackage);
     if (packageData == null) {
@@ -132,6 +147,57 @@ class _AddPackagePageState extends ConsumerState<EditPackagePage>
     return (Directory(directoryCopy.$1!), null);
   }
 
+  bool isSavePackage = false;
+  Future<void> createPackage(BuildContext context) async {
+    setState(() {
+      isSavePackage = true;
+    });
+    final (PackageData?, String?) resultGeneratePackage =
+        await _generatePackageDBLogic();
+    if (resultGeneratePackage.$1 == null) {
+      if (context.mounted) {
+        await notificationsShared(
+          context,
+          model: NotificationsModelShared(
+              title: 'Aviso :/', message: resultGeneratePackage.$2!),
+        );
+      }
+      return;
+    }
+    final PackageData data = resultGeneratePackage.$1!;
+    final int idResult =
+        await ref.read(packageServiceLogicSharedProvider).add(data);
+    final PackageData? dataResult =
+        await ref.read(packageServiceLogicSharedProvider).getId(idResult);
+
+    if (dataResult == null) {
+      return;
+    }
+    final (Directory?, NotificationsModelShared?) resultCopyFiles =
+        await _copyFilesPackage(dataResult.id);
+    if (resultCopyFiles.$1 == null && context.mounted) {
+      await notificationsShared(context, model: resultCopyFiles.$2!);
+      return;
+    }
+    final String? resultCreateHashes = await HashesJsonHelper.saveHashes(
+        directoryPath: resultCopyFiles.$1!.path,
+        packageId: dataResult.id.toString());
+    if (resultCreateHashes != null && context.mounted) {
+      await notificationsShared(
+        context,
+        model: NotificationsModelShared(
+            title: 'Error :/',
+            message: resultCreateHashes,
+            severity: InfoBarSeverity.error),
+      );
+      return;
+    }
+    ref.read(packageListLogicSharedProvider.notifier).update();
+    setState(() {
+      isSavePackage = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return NavigationView(
@@ -148,59 +214,21 @@ class _AddPackagePageState extends ConsumerState<EditPackagePage>
         ),
         actions: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: FilledButton(
-            child: const Text('Agregar'),
-            onPressed: () async {
-              final (PackageData?, String?) resultGeneratePackage =
-                  await _generatePackageDBLogic();
-              if (resultGeneratePackage.$1 == null) {
-                print(resultGeneratePackage.$2);
-                if (context.mounted) {
-                  await notificationsShared(
-                    context,
-                    model: NotificationsModelShared(
-                        title: 'Aviso :/', message: resultGeneratePackage.$2!),
-                  );
-                }
-                return;
-              }
-              final PackageData data = resultGeneratePackage.$1!;
-              final int idResult =
-                  await ref.read(packageServiceLogicSharedProvider).add(data);
-              final PackageData? dataResult = await ref
-                  .read(packageServiceLogicSharedProvider)
-                  .getId(idResult);
-
-              if (dataResult == null) {
-                return;
-              }
-              final (Directory?, NotificationsModelShared?) resultCopyFiles =
-                  await _copyFilesPackage(dataResult.id);
-              if (resultCopyFiles.$1 == null && context.mounted) {
-                await notificationsShared(context, model: resultCopyFiles.$2!);
-                return;
-              }
-              final String? resultCreateHashes =
-                  await HashesJsonHelper.saveHashes(
-                      directoryPath: resultCopyFiles.$1!.path,
-                      packageId: dataResult.id.toString());
-              if (resultCreateHashes != null && context.mounted) {
-                await notificationsShared(
-                  context,
-                  model: NotificationsModelShared(
-                      title: 'Error :/',
-                      message: resultCreateHashes,
-                      severity: InfoBarSeverity.error),
-                );
-                return;
-              }
-              if (context.mounted) {
-                context.pop();
-              }
-
-              //HashesJsonHelper.checkHashes();
-            },
-          ),
+          child: isSavePackage
+              ? ProgressRing()
+              : FilledButton(
+                  child: const Text('Guardar'),
+                  onPressed: () async {
+                    if (widget.package == null) {
+                      await createPackage(context);
+                      if (context.mounted) {
+                        context.pop();
+                      }
+                    } else {
+                      notificationsShared(context, model: NotificationsModelShared(title: 'Error :/', message: 'No se pudo generar el paquete'));
+                    }
+                  },
+                ),
         ),
       ),
       content: Row(
@@ -246,7 +274,7 @@ class _FilesPackageView extends HookConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            !(ref.watch(formLogicEditPackageProvider).iconPath.contains(''))
+            (ref.watch(formLogicEditPackageProvider).iconPath.contains('assets'))
                 ? Image.asset(
                     appLogo,
                     height: 300,

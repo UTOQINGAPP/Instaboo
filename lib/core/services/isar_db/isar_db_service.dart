@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:instaboo/core/data/data.dart';
 import 'package:isar/isar.dart';
 
+// IsarDBService is a singleton class responsible for managing the Isar database instance.
+// It provides methods to initialize the database, ensuring the necessary directory structure is in place.
+// The service supports multiple schemas, including PlatformData, CategoryData, and PackageData,
+// and ensures a single Isar instance is accessible throughout the application.
 class IsarDBService {
   static final IsarDBService _instance = IsarDBService._internal();
   Isar? _isar;

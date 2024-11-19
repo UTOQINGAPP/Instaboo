@@ -6,7 +6,20 @@ import 'package:flutter/foundation.dart';
 
 part 'theme_logic_shared.g.dart';
 
-// Enumeración para los indicadores de navegación
+// ThemeLogicShared manages the application's theme settings using Riverpod for state management.
+// It allows dynamic updates to various UI settings, including:
+// - Accent color
+// - Theme mode (light or dark)
+// - Navigation pane display mode
+// - Navigation indicators
+// - Window effects (like acrylic or solid)
+// - Text direction (LTR or RTL)
+// - Locale for internationalization
+//
+// The ThemeState class encapsulates these properties and includes a `copyWith` method for easy state updates.
+// The provider also supports system accent color detection on supported platforms and applies window effects dynamically.
+
+
 enum NavigationIndicators { sticky, end }
 
 class ThemeState {
