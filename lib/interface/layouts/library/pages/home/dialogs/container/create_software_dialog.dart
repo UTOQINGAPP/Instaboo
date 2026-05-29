@@ -1,21 +1,37 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/core.dart';
+import 'package:instaboo/core/infra/infra_core.dart';
+import 'package:instaboo/core/rules/rules_core.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/logic/logic_home_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/models/models_library.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 
-/// Dialog for creating or editing a software entry in the library.
-/// Diálogo para crear o editar un registro de software en la biblioteca.
-///
-/// When [software] is null, the dialog is in create mode; otherwise in edit mode.
-/// Cuando [software] es null, el diálogo está en modo creación; si no, en modo edición.
-class AddSoftwareDialogLibrary extends ConsumerStatefulWidget {
-  /// Optional software to edit. Null for create mode.
-  /// Software opcional a editar. Null para modo creación.
-  final SoftwareModelLibrary? software;
+// ─── Providers ───────────────────────────────────────────────────────────────
 
+final _dialogFrameworksProvider =
+    FutureProvider.autoDispose<List<InstallerFrameworkDataRule>>((ref) async {
+  final consumer = ref.read(installerFrameworksConsumerInjectionProvider);
+  final response = await consumer.getAll();
+  return response.resolve(
+    onSuccess: (data, _) => data,
+    onFailure: (msg, _) => throw Exception(msg),
+  );
+});
+
+final _dialogAllSoftwareProvider =
+    FutureProvider.autoDispose<List<SoftwareDataRule>>((ref) async {
+  final consumer = ref.read(softwareConsumerInjectionProvider);
+  final response = await consumer.getAll(activeOnly: true);
+  return response.resolve(
+    onSuccess: (data, _) => data,
+    onFailure: (msg, _) => throw Exception(msg),
+  );
+});
+
+/// Dialog for creating or editing a software entry in the library.
+class AddSoftwareDialogLibrary extends ConsumerStatefulWidget {
+  final SoftwareModelLibrary? software;
   const AddSoftwareDialogLibrary({super.key, this.software});
 
   @override
@@ -33,13 +49,20 @@ class _AddSoftwareDialogLibraryState
   late final TextEditingController _logoController;
   late final TextEditingController _sizeMbController;
   late final TextEditingController _installerSourceController;
-  late final TextEditingController _silentArgsController;
 
+  String _silentArgs = '';
+  int? _selectedFrameworkId;
+  String _extraSilentArgs = '';
+  String? _detectedFrameworkName;
   int? _selectedCategoryId;
-  InstallationTypeEnumRule _installationType = InstallationTypeEnumRule.auto;
-  InstallerSourceTypeEnumRule _installerSourceType =
-      InstallerSourceTypeEnumRule.file;
   bool _isActive = true;
+  bool _isAutoInstallable = true;
+  bool _requiresInternet = false;
+
+  // ── Dependencies state (edit mode only) ──────────────────────────────────
+  List<SoftwareDataRule> _dependencies = [];
+  bool _isLoadingDeps = false;
+  int? _selectedDepToAdd;
 
   bool get _isEditMode => widget.software != null;
 
@@ -58,12 +81,17 @@ class _AddSoftwareDialogLibraryState
     _installerSourceController = TextEditingController(
       text: s?.installerSource ?? '',
     );
-    _silentArgsController = TextEditingController(text: s?.silentArgs ?? '');
+    _silentArgs = s?.silentArgs ?? '';
     if (s != null) {
       _selectedCategoryId = s.category?.id;
-      _installationType = s.installationType;
-      _installerSourceType = s.installerSourceType;
       _isActive = s.isActive;
+      _isAutoInstallable = s.isAutoInstallable;
+      _requiresInternet = s.requiresInternet;
+      _selectedFrameworkId = s.installerFrameworkId;
+      _extraSilentArgs = s.extraSilentArgs ?? '';
+      // Load existing dependencies after first frame.
+      // Carga las dependencias existentes después del primer frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadDependencies());
     }
   }
 
@@ -76,12 +104,9 @@ class _AddSoftwareDialogLibraryState
     _logoController.dispose();
     _sizeMbController.dispose();
     _installerSourceController.dispose();
-    _silentArgsController.dispose();
     super.dispose();
   }
 
-  /// Builds the dialog shell (Material, rounded, with close).
-  /// Construye la carcasa del diálogo (Material, redondeado, con cierre).
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -139,9 +164,7 @@ class _AddSoftwareDialogLibraryState
           Expanded(
             child: Text(
               _isEditMode ? 'Editar software' : 'Agregar software',
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
           IconButton(
@@ -155,7 +178,7 @@ class _AddSoftwareDialogLibraryState
   }
 
   List<Widget> _buildCreateOnlyFields(TextTheme textTheme) {
-    final categoriesAsync = ref.watch(logicCategoriesSharedProvider);
+    final categoriesAsync = ref.watch(categoriesLogicSharedProvider);
     final categoriesList = categoriesAsync.when(
       data: (state) => state.categoriesList,
       loading: () => <CategoriesModelShared>[],
@@ -163,8 +186,6 @@ class _AddSoftwareDialogLibraryState
     );
 
     return <Widget>[
-      const SizedBox(height: 16),
-      _buildSlugField(textTheme),
       const SizedBox(height: 16),
       _buildVersionField(textTheme),
       const SizedBox(height: 16),
@@ -176,11 +197,13 @@ class _AddSoftwareDialogLibraryState
       const SizedBox(height: 16),
       _buildSizeMbField(textTheme),
       const SizedBox(height: 16),
-      _buildInstallationTypeDropdown(textTheme),
-      const SizedBox(height: 16),
       _buildInstallerSourceField(textTheme),
       const SizedBox(height: 16),
-      _buildSilentArgsField(textTheme),
+      _buildFrameworkSection(textTheme),
+      const SizedBox(height: 16),
+      _buildIsAutoInstallableSwitch(textTheme),
+      const SizedBox(height: 8),
+      _buildRequiresInternetSwitch(textTheme),
     ];
   }
 
@@ -194,9 +217,7 @@ class _AddSoftwareDialogLibraryState
       ),
       textCapitalization: TextCapitalization.words,
       validator: (String? value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'El nombre es obligatorio';
-        }
+        if (value == null || value.trim().isEmpty) return 'El nombre es obligatorio';
         return null;
       },
       onChanged: _isEditMode
@@ -218,28 +239,11 @@ class _AddSoftwareDialogLibraryState
         .replaceAll(RegExp(r'[^a-z0-9-]'), '');
   }
 
-  Widget _buildSlugField(TextTheme textTheme) {
-    return TextFormField(
-      controller: _slugController,
-      decoration: InputDecoration(
-        labelText: 'Slug (identificador único)',
-        hintText: 'Ej: visual-studio-code',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      validator: (String? value) {
-        if (!_isEditMode && (value == null || value.trim().isEmpty)) {
-          return 'El slug es obligatorio';
-        }
-        return null;
-      },
-    );
-  }
-
   Widget _buildVersionField(TextTheme textTheme) {
     return TextFormField(
       controller: _versionController,
       decoration: InputDecoration(
-        labelText: 'Versión (opcional)',
+        labelText: 'Version (opcional)',
         hintText: 'Ej: 1.0.0',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -253,7 +257,7 @@ class _AddSoftwareDialogLibraryState
     return DropdownButtonFormField<int>(
       initialValue: _selectedCategoryId,
       decoration: InputDecoration(
-        labelText: 'Categoría',
+        labelText: 'Categoria',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       items: categoriesList
@@ -264,9 +268,7 @@ class _AddSoftwareDialogLibraryState
           .toList(),
       onChanged: (int? value) => setState(() => _selectedCategoryId = value),
       validator: (int? value) {
-        if (!_isEditMode && value == null) {
-          return 'Selecciona una categoría';
-        }
+        if (!_isEditMode && value == null) return 'Selecciona una categoria';
         return null;
       },
     );
@@ -276,8 +278,8 @@ class _AddSoftwareDialogLibraryState
     return TextFormField(
       controller: _descriptionController,
       decoration: InputDecoration(
-        labelText: 'Descripción (opcional)',
-        hintText: 'Breve descripción del software',
+        labelText: 'Descripcion (opcional)',
+        hintText: 'Breve descripcion del software',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         alignLabelWithHint: true,
       ),
@@ -285,8 +287,6 @@ class _AddSoftwareDialogLibraryState
     );
   }
 
-  /// Builds the logo field: read-only path + file picker for PNG image.
-  /// Construye el campo de logo: ruta de solo lectura + selector de archivo PNG.
   Widget _buildLogoField(TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,16 +307,12 @@ class _AddSoftwareDialogLibraryState
                 readOnly: true,
                 decoration: InputDecoration(
                   hintText: 'Ninguna imagen seleccionada',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   suffixIcon: _logoController.text.trim().isEmpty
                       ? null
                       : IconButton(
                           icon: const Icon(Icons.clear),
-                          onPressed: () => setState(() {
-                            _logoController.clear();
-                          }),
+                          onPressed: () => setState(() { _logoController.clear(); }),
                           tooltip: 'Quitar imagen',
                         ),
                 ),
@@ -334,8 +330,6 @@ class _AddSoftwareDialogLibraryState
     );
   }
 
-  /// Opens file_picker to select a PNG image for the logo.
-  /// Abre el selector de archivos para elegir una imagen PNG como logo.
   Future<void> _pickLogoFile() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -353,7 +347,7 @@ class _AddSoftwareDialogLibraryState
     return TextFormField(
       controller: _sizeMbController,
       decoration: InputDecoration(
-        labelText: 'Tamaño en MB (opcional)',
+        labelText: 'Tamano en MB (opcional)',
         hintText: 'Ej: 150',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -361,33 +355,6 @@ class _AddSoftwareDialogLibraryState
     );
   }
 
-  Widget _buildInstallationTypeDropdown(TextTheme textTheme) {
-    return DropdownButtonFormField<InstallationTypeEnumRule>(
-      initialValue: _installationType,
-      decoration: InputDecoration(
-        labelText: 'Tipo de instalación',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      items: InstallationTypeEnumRule.values
-          .map(
-            (InstallationTypeEnumRule e) =>
-                DropdownMenuItem<InstallationTypeEnumRule>(
-                  value: e,
-                  child: Text(e.name == 'auto' ? 'Automática' : 'Asistida'),
-                ),
-          )
-          .toList(),
-      onChanged: (InstallationTypeEnumRule? value) {
-        if (value != null) setState(() => _installationType = value);
-      },
-    );
-  }
-
-  /// Builds the installer source field: read-only path + file picker button.
-  /// For now only file-based installation is supported (file_picker).
-  ///
-  /// Construye el campo de origen del instalador: ruta de solo lectura + botón selector.
-  /// Por ahora solo se soporta instalación por archivo (file_picker).
   Widget _buildInstallerSourceField(TextTheme textTheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,26 +374,17 @@ class _AddSoftwareDialogLibraryState
                 controller: _installerSourceController,
                 readOnly: true,
                 decoration: InputDecoration(
-                  hintText: 'Ningún archivo seleccionado',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  hintText: 'Ningun archivo seleccionado',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   suffixIcon: _installerSourceController.text.trim().isEmpty
                       ? null
                       : IconButton(
                           icon: const Icon(Icons.clear),
-                          onPressed: () => setState(() {
-                            _installerSourceController.clear();
-                          }),
+                          onPressed: () => setState(() { _installerSourceController.clear(); }),
                           tooltip: 'Quitar archivo',
                         ),
                 ),
-                validator: (String? value) {
-                  if (!_isEditMode && (value == null || value.trim().isEmpty)) {
-                    return 'Selecciona el archivo del instalador';
-                  }
-                  return null;
-                },
+                validator: (String? value) => null,
               ),
             ),
             const SizedBox(width: 12),
@@ -441,8 +399,6 @@ class _AddSoftwareDialogLibraryState
     );
   }
 
-  /// Opens file_picker to select an installer file (.exe, .msi).
-  /// Asigna la ruta seleccionada al campo de origen del instalador.
   Future<void> _pickInstallerFile() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -453,17 +409,106 @@ class _AddSoftwareDialogLibraryState
     final PlatformFile file = result.files.single;
     final String path = file.path ?? file.name;
     if (path.isEmpty) return;
-    setState(() => _installerSourceController.text = path);
+
+    setState(() {
+      _installerSourceController.text = path;
+      _detectedFrameworkName = null;
+    });
+
+    // Auto-detect framework from binary signature.
+    final detectedName = await InstallerDetectorInfra.detect(path);
+    if (detectedName != null && mounted) {
+      final frameworksAsync = ref.read(_dialogFrameworksProvider);
+      frameworksAsync.whenData((frameworks) {
+        final match = frameworks
+            .where((f) => f.name.toLowerCase() == detectedName.toLowerCase())
+            .firstOrNull;
+        if (match != null && mounted) {
+          setState(() {
+            _selectedFrameworkId = match.id;
+            _detectedFrameworkName = match.name;
+          });
+        }
+      });
+    }
   }
 
-  Widget _buildSilentArgsField(TextTheme textTheme) {
-    return TextFormField(
-      controller: _silentArgsController,
-      decoration: InputDecoration(
-        labelText: 'Argumentos silenciosos (opcional)',
-        hintText: 'Ej: /S /quiet',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+  Widget _buildFrameworkSection(TextTheme textTheme) {
+    final frameworksAsync = ref.watch(_dialogFrameworksProvider);
+
+    return frameworksAsync.when(
+      data: (frameworks) {
+        final selected = frameworks
+            .where((f) => f.id == _selectedFrameworkId)
+            .firstOrNull;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownButtonFormField<int?>(
+              value: _selectedFrameworkId,
+              decoration: InputDecoration(
+                labelText: 'Framework del instalador',
+                hintText: 'Detectado automaticamente o selecciona manualmente',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                helperText: _detectedFrameworkName != null
+                    ? 'Detectado: $_detectedFrameworkName'
+                    : null,
+                helperStyle: const TextStyle(color: Colors.green),
+              ),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text('Sin framework asignado'),
+                ),
+                ...frameworks.map(
+                  (f) => DropdownMenuItem<int?>(value: f.id, child: Text(f.name)),
+                ),
+              ],
+              onChanged: (value) => setState(() => _selectedFrameworkId = value),
+            ),
+
+            if (selected != null && selected.silentArgs.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16,
+                        color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Args del framework: ${selected.silentArgs}',
+                        style: textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 16),
+            SilentArgsChipInputShared(
+              key: ValueKey(_selectedFrameworkId),
+              initialValue: _extraSilentArgs,
+              label: 'Argumentos adicionales (opcionales)',
+              hint: 'Ej: /LOG  y presiona Enter',
+              onChanged: (value) => _extraSilentArgs = value,
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -476,8 +521,224 @@ class _AddSoftwareDialogLibraryState
       const SizedBox(height: 16),
       _buildLogoField(textTheme),
       const SizedBox(height: 16),
+      _buildFrameworkSection(textTheme),
+      const SizedBox(height: 16),
+      const Divider(),
+      const SizedBox(height: 8),
+      _buildDependenciesSection(textTheme),
+      const SizedBox(height: 16),
+      const Divider(),
+      const SizedBox(height: 8),
+      _buildIsAutoInstallableSwitch(textTheme),
+      const SizedBox(height: 8),
+      _buildRequiresInternetSwitch(textTheme),
+      const SizedBox(height: 8),
       _buildIsActiveSwitch(textTheme),
     ];
+  }
+
+  // ── Dependency helpers ────────────────────────────────────────────────────
+
+  Future<void> _loadDependencies() async {
+    if (!mounted) return;
+    setState(() => _isLoadingDeps = true);
+    final consumer = ref.read(dependenciesConsumerInjectionProvider);
+    final result = await consumer.getDependencies(widget.software!.id);
+    if (!mounted) return;
+    result.resolve(
+      onSuccess: (data, _) => setState(() {
+        _dependencies = data;
+        _isLoadingDeps = false;
+      }),
+      onFailure: (_, _) => setState(() => _isLoadingDeps = false),
+    );
+  }
+
+  Future<void> _addDependency() async {
+    final depId = _selectedDepToAdd;
+    if (depId == null) return;
+    final consumer = ref.read(dependenciesConsumerInjectionProvider);
+    final result = await consumer.addDependency(widget.software!.id, depId);
+    if (!mounted) return;
+    result.resolve(
+      onSuccess: (_, _) {
+        setState(() => _selectedDepToAdd = null);
+        _loadDependencies();
+      },
+      onFailure: (_, _) {},
+    );
+  }
+
+  Future<void> _removeDependency(int depSoftwareId) async {
+    final consumer = ref.read(dependenciesConsumerInjectionProvider);
+    final result = await consumer.removeDependency(
+      widget.software!.id,
+      depSoftwareId,
+    );
+    if (!mounted) return;
+    result.resolve(
+      onSuccess: (_, _) => setState(
+        () => _dependencies.removeWhere((d) => d.id == depSoftwareId),
+      ),
+      onFailure: (_, _) {},
+    );
+  }
+
+  Widget _buildDependenciesSection(TextTheme textTheme) {
+    final allSoftwareAsync = ref.watch(_dialogAllSoftwareProvider);
+    final depIds = _dependencies.map((d) => d.id).toSet();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Dependencias', style: textTheme.bodyLarge),
+        const SizedBox(height: 4),
+        Text(
+          'Software que debe instalarse antes que este.',
+          style: textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // ── Chips de dependencias actuales ─────────────────────────────────
+        if (_isLoadingDeps)
+          const SizedBox(
+            height: 28,
+            width: 28,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else if (_dependencies.isEmpty)
+          Text(
+            'Sin dependencias.',
+            style: textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: _dependencies
+                .map(
+                  (dep) => Chip(
+                    label: Text(dep.name),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    onDeleted: () => _removeDependency(dep.id),
+                  ),
+                )
+                .toList(),
+          ),
+
+        const SizedBox(height: 12),
+
+        // ── Agregar nueva dependencia ──────────────────────────────────────
+        allSoftwareAsync.when(
+          data: (allSoftware) {
+            final available = allSoftware
+                .where(
+                  (s) => s.id != widget.software!.id && !depIds.contains(s.id),
+                )
+                .toList();
+
+            return Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedDepToAdd,
+                    decoration: InputDecoration(
+                      labelText: 'Agregar dependencia',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                    items: available
+                        .map(
+                          (s) => DropdownMenuItem<int>(
+                            value: s.id,
+                            child: Text(s.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: available.isEmpty
+                        ? null
+                        : (v) => setState(() => _selectedDepToAdd = v),
+                    hint: available.isEmpty
+                        ? const Text('No hay software disponible')
+                        : const Text('Seleccionar software…'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton(
+                  onPressed: _selectedDepToAdd == null ? null : _addDependency,
+                  child: const Text('Agregar'),
+                ),
+              ],
+            );
+          },
+          loading: () => const SizedBox(
+            height: 28,
+            width: 28,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          error: (_, _) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIsAutoInstallableSwitch(TextTheme textTheme) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Instalación silenciosa', style: textTheme.bodyLarge),
+              Text(
+                'El instalador se ejecuta sin intervención del usuario',
+                style: textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: _isAutoInstallable,
+          onChanged: (bool value) => setState(() => _isAutoInstallable = value),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequiresInternetSwitch(TextTheme textTheme) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Requiere internet', style: textTheme.bodyLarge),
+              Text(
+                'La instalacion necesita conexion a internet',
+                style: textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: _requiresInternet,
+          onChanged: (bool value) => setState(() => _requiresInternet = value),
+        ),
+      ],
+    );
   }
 
   Widget _buildIsActiveSwitch(TextTheme textTheme) {
@@ -527,9 +788,10 @@ class _AddSoftwareDialogLibraryState
 
     final logic = ref.read(logicHomeLibraryProvider.notifier);
 
+    final bool ok;
     if (_isEditMode) {
       final s = widget.software!;
-      await logic.updateSoftware(
+      ok = await logic.updateSoftware(
         softwareId: s.id,
         name: _nameController.text.trim(),
         version: _versionController.text.trim().isEmpty
@@ -542,15 +804,17 @@ class _AddSoftwareDialogLibraryState
             ? null
             : _logoController.text.trim(),
         isActive: _isActive,
+        isAutoInstallable: _isAutoInstallable,
+        requiresInternet: _requiresInternet,
+        installerFrameworkId: _selectedFrameworkId,
+        extraSilentArgs:
+            _extraSilentArgs.trim().isEmpty ? null : _extraSilentArgs.trim(),
       );
     } else {
       final categoryId = _selectedCategoryId;
       if (categoryId == null) return;
 
-      final String sizeMbStr = _sizeMbController.text.trim();
-      final int? sizeMb = sizeMbStr.isEmpty ? null : int.tryParse(sizeMbStr);
-
-      await logic.createSoftware(
+      ok = await logic.createSoftware(
         name: _nameController.text.trim(),
         slug: _slugController.text.trim(),
         version: _versionController.text.trim().isEmpty
@@ -560,20 +824,22 @@ class _AddSoftwareDialogLibraryState
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        logo: _logoController.text.trim().isEmpty
+        iconSourcePath: _logoController.text.trim().isEmpty
             ? null
             : _logoController.text.trim(),
-        sizeMb: sizeMb,
-        installationType: _installationType,
-        installerSourceType: _installerSourceType,
-        installerSource: _installerSourceController.text.trim(),
-        silentArgs: _silentArgsController.text.trim().isEmpty
+        installerSourcePath: _installerSourceController.text.trim().isEmpty
             ? null
-            : _silentArgsController.text.trim(),
+            : _installerSourceController.text.trim(),
+        silentArgs: _silentArgs.trim().isEmpty ? null : _silentArgs.trim(),
+        isAutoInstallable: _isAutoInstallable,
+        requiresInternet: _requiresInternet,
+        installerFrameworkId: _selectedFrameworkId,
+        extraSilentArgs:
+            _extraSilentArgs.trim().isEmpty ? null : _extraSilentArgs.trim(),
       );
     }
 
-    if (!context.mounted) return;
-    Navigator.of(context).pop();
+    if (!mounted) return;
+    if (ok) Navigator.of(context).pop();
   }
 }

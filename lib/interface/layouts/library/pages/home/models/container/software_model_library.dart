@@ -1,67 +1,37 @@
-import 'package:instaboo/core/core.dart';
+import 'package:instaboo/core/rules/rules_core.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 
+/// UI model for a software row in the library layout.
+/// Modelo de UI para una fila de software en el layout de biblioteca.
 class SoftwareModelLibrary {
-  /// Primary key.
   final int id;
-
-  /// Software name.
   final String name;
-
-  /// Unique slug for URLs/identifiers.
   final String slug;
-
-  /// Version string.
   final String? version;
-
-  /// Category associated with this software (nullable when not resolved).
-  /// Categoría asociada a este software (puede ser null si no está resuelta).
   final CategoriesModelShared? category;
-
-  /// Size in MB (nullable).
   final int? sizeMb;
-
-  /// Description text.
   final String? description;
-
-  /// Logo path or URL.
   final String? logo;
-
-  /// Installation type: auto or assisted.
-  final InstallationTypeEnumRule installationType;
-
-  /// Installer source type.
-  final InstallerSourceTypeEnumRule installerSourceType;
-
-  /// Installer source (path, URL, command, etc.).
+  final bool isAutoInstallable;
+  final InstallerContentTypeEnumRule installerContentType;
   final String installerSource;
-
-  /// Silent installation arguments.
   final String? silentArgs;
-
-  /// Minimum RAM in GB.
   final int? minRamGb;
-
-  /// Minimum disk space in GB.
   final int? minDiskGb;
-
-  /// Operating system requirement.
   final String operatingSystem;
-
-  /// Whether installation requires restart.
   final bool requiresRestart;
-
-  /// Whether installation requires internet.
   final bool requiresInternet;
-
-  /// Whether to install dependencies.
   final bool installDependencies;
-
-  /// Whether to run installation in background.
   final bool backgroundInstall;
-
-  /// Whether the software entry is active.
   final bool isActive;
+
+  /// Installer framework type id (FK to installer_frameworks).
+  /// Id del tipo de framework de instalador.
+  final int? installerFrameworkId;
+
+  /// Extra silent args appended on top of framework args.
+  /// Args silenciosos extra que se agregan sobre los del framework.
+  final String? extraSilentArgs;
 
   const SoftwareModelLibrary({
     required this.id,
@@ -72,8 +42,8 @@ class SoftwareModelLibrary {
     required this.sizeMb,
     required this.description,
     required this.logo,
-    required this.installationType,
-    required this.installerSourceType,
+    required this.isAutoInstallable,
+    required this.installerContentType,
     required this.installerSource,
     this.silentArgs,
     this.minRamGb,
@@ -84,5 +54,7 @@ class SoftwareModelLibrary {
     this.installDependencies = false,
     this.backgroundInstall = false,
     this.isActive = true,
+    this.installerFrameworkId,
+    this.extraSilentArgs,
   });
 }

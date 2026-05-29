@@ -18,7 +18,7 @@ class LicensesDialogHome extends StatelessWidget {
       child: Center(
         child: Material(
           borderRadius: BorderRadius.circular(12),
-          color: colorScheme.surface,
+          color: colorScheme.onSecondary,
           elevation: 8,
           child: ConstrainedBox(
             constraints: BoxConstraints(

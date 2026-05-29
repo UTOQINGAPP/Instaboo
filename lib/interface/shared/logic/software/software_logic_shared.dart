@@ -72,7 +72,7 @@ final class SoftwareStateShared {
 /// Lógica compartida de software. Gestiona lista, búsqueda, carga y estado de error.
 /// Solo lectura: lista y búsqueda. Crear/actualizar/eliminar quedan en la lógica de cada layout (ej. biblioteca).
 @Riverpod(keepAlive: true)
-class LogicSoftwareShared extends _$LogicSoftwareShared {
+class SoftwareLogicShared extends _$SoftwareLogicShared {
   @override
   Future<SoftwareStateShared> build() async {
     state = const AsyncData(SoftwareStateShared(isLoading: true));
@@ -88,7 +88,7 @@ class LogicSoftwareShared extends _$LogicSoftwareShared {
           const SoftwareStateShared(isLoading: true),
     );
     final consumer = ref.read(softwareConsumerInjectionProvider);
-    final response = await consumer.listSoftware();
+    final response = await consumer.getAll();
     response.resolve(
       onSuccess: (List<SoftwareDataRule> data, _) {
         state = AsyncData(
@@ -131,7 +131,7 @@ class LogicSoftwareShared extends _$LogicSoftwareShared {
           SoftwareStateShared(isLoading: true, searchQuery: query),
     );
     final consumer = ref.read(softwareConsumerInjectionProvider);
-    final response = await consumer.searchSoftware(query);
+    final response = await consumer.search(query);
     response.resolve(
       onSuccess: (List<SoftwareDataRule> data, _) {
         state = AsyncData(

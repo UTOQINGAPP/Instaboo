@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
@@ -25,10 +27,26 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
   /// Ítem de filtro actualmente seleccionado para la lista de software.
   CustomFilterItemComponentShared? _selectedFilterItem;
 
+  /// Search text controller — must live outside build() to avoid losing state on rebuilds.
+  /// Controlador de texto de búsqueda — debe vivir fuera de build() para no perder el estado en cada rebuild.
+  late final TextEditingController _searchController;
+
+  /// Timer used to debounce search requests so we don't query on every keystroke.
+  /// Timer usado para hacer debounce de las búsquedas y no consultar en cada tecla.
+  Timer? _debounceTimer;
+
   @override
   void initState() {
     super.initState();
     _selectedFilterItem = allCategoriesItem;
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -76,7 +94,7 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                           BuildContext context,
                           Animation<double> animation,
                           Animation<double> secondaryAnimation,
-                        ) => Container(child: AddSoftwareDialogLibrary()),
+                        ) => const AddSoftwareDialogLibrary(),
                     barrierDismissible: true,
                     barrierLabel: 'Cerrar',
                     barrierColor: Colors.black.withValues(alpha: 0.5),
@@ -91,10 +109,10 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
             SizedBox(height: 20),
 
             CustomSearchAndFilterBarComponentShared(
-              searchController: TextEditingController(),
+              searchController: _searchController,
               selectedFilterItem: _selectedFilterItem,
               filterItems: ref
-                  .watch(logicCategoriesSharedProvider)
+                  .watch(categoriesLogicSharedProvider)
                   .when(
                     data: (CategoriesStateShared state) {
                       final List<CustomFilterItemComponentShared>
@@ -118,13 +136,26 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                     error: (_, _) => <CustomFilterItemComponentShared>[],
                   ),
               onSearchChanged: (String value) {
-                // TODO: connect search text with logic/filtering when available.
+                _debounceTimer?.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+                  ref
+                      .read(logicHomeLibraryProvider.notifier)
+                      .searchSoftware(value);
+                });
               },
               onFilterItemSelected:
                   (CustomFilterItemComponentShared? selectedItem) {
                     setState(() {
                       _selectedFilterItem = selectedItem;
                     });
+                    // id == -1 significa "Todas las categorías" → limpiar filtro
+                    final int? categoryId =
+                        (selectedItem == null || selectedItem.id == -1)
+                            ? null
+                            : selectedItem.id;
+                    ref
+                        .read(logicHomeLibraryProvider.notifier)
+                        .filterByCategory(categoryId);
                   },
             ),
             SizedBox(height: 20),
@@ -139,11 +170,6 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                   return ListView.builder(
                     itemBuilder: (context, index) {
                       final software = softwareList[index];
-                      final categories = ref.read(
-                        logicCategoriesSharedProvider.notifier,
-                      );
-
-                      print(software.name);
                       return ItemSoftwareComponentLibrary(
                         logoPath: software.logo ?? AssetsConfig.logo,
                         name: software.name,
@@ -168,7 +194,32 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                             ),
                           );
                         },
-                        onDelete: () {},
+                        onDelete: () async {
+                          final bool? confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (BuildContext ctx) => AlertDialog(
+                              title: const Text('Eliminar software'),
+                              content: Text(
+                                '¿Estás seguro de que deseas eliminar "${software.name}"? Esta acción no se puede deshacer.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: const Text('Eliminar'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await ref
+                                .read(logicHomeLibraryProvider.notifier)
+                                .deleteSoftware(software.id);
+                          }
+                        },
                       );
                     },
                     itemCount: softwareList.length,

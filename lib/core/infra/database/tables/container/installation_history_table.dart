@@ -1,61 +1,63 @@
 import 'package:drift/drift.dart';
 
-import '../../enums/enums_database.dart';
-import 'installations_table.dart';
+import 'installation_packs_table.dart';
 import 'software_table.dart';
 
-/// Installation history for reports and auditing.
-/// Historial de instalaciones para reportes y auditoría.
-///
-/// Maps to PostgreSQL: installation_history
-/// Mapea a PostgreSQL: installation_history
-@TableIndex(
-  name: 'idx_installation_history_installation_date',
-  columns: {#installationDate},
-)
-@TableIndex(
-  name: 'idx_installation_history_software_id',
-  columns: {#softwareId},
-)
-@TableIndex(name: 'idx_installation_history_status', columns: {#status})
-@TableIndex(
-  name: 'idx_installation_history_date_status',
-  columns: {#installationDate, #status},
-)
+/// Immutable finished installation records with denormalized snapshots.
+/// Registros inmutables de instalaciones finalizadas con snapshots desnormalizados.
+@TableIndex(name: 'idx_history_completed', columns: {#completedAt})
+@TableIndex(name: 'idx_history_status', columns: {#status})
+@TableIndex(name: 'idx_history_software', columns: {#softwareId})
+@TableIndex(name: 'idx_history_comp_st', columns: {#completedAt, #status})
 class InstallationHistoryTable extends Table {
+  @override
+  String get tableName => 'installation_history';
+
   /// Primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// Foreign key to installations (nullable if installation record was deleted).
-  IntColumn get installationId => integer().nullable().references(
-    InstallationsTable,
-    #id,
-    onDelete: KeyAction.setNull,
-  )();
-
-  /// Foreign key to software.
+  /// Original software id when still present.
   IntColumn get softwareId => integer().nullable().references(
-    SoftwareTable,
-    #id,
-    onDelete: KeyAction.setNull,
-  )();
+        SoftwareTable,
+        #id,
+        onDelete: KeyAction.setNull,
+      )();
 
-  /// Software name at time of installation (denormalized for history).
+  /// Pack id when the run belonged to a pack.
+  IntColumn get packId => integer().nullable().references(
+        InstallationPacksTable,
+        #id,
+        onDelete: KeyAction.setNull,
+      )();
+
+  /// Software name snapshot (max 255).
   TextColumn get softwareName => text().withLength(max: 255)();
 
-  /// When the installation occurred.
-  DateTimeColumn get installationDate =>
-      dateTime().withDefault(currentDateAndTime)();
+  /// Version snapshot (max 50).
+  TextColumn get softwareVersion => text().withLength(max: 50).nullable()();
 
-  /// Final status: success, failed, or cancelled.
-  TextColumn get status => textEnum<HistoryStatusEnumDatabase>()();
+  /// Installer type snapshot (max 30).
+  TextColumn get installerType => text().withLength(max: 30).nullable()();
 
-  /// Duration in seconds (nullable).
-  IntColumn get durationSeconds => integer().nullable()();
+  /// `success`, `failed`, or `cancelled` (plain text from rules).
+  TextColumn get status => text()();
 
-  /// Error details if failed.
+  /// Failure details.
   TextColumn get errorDetails => text().nullable()();
 
-  /// Creation timestamp.
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  /// Run start time.
+  DateTimeColumn get startedAt => dateTime()();
+
+  /// Run completion time.
+  DateTimeColumn get completedAt => dateTime()();
+
+  /// JSON snapshot of the machine that ran this installation.
+  /// Keys: hostname, username, domain?, osVersion, processors, totalRamMb?.
+  ///
+  /// Snapshot JSON del equipo que ejecutó la instalación.
+  TextColumn get machineInfo => text().nullable()();
+
+  /// Row creation time.
+  DateTimeColumn get createdAt =>
+      dateTime().withDefault(currentDateAndTime)();
 }

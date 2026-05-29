@@ -18,7 +18,7 @@ class OpenSourceSoftwareInformationDialogHome extends StatelessWidget {
       child: Center(
         child: Material(
           borderRadius: BorderRadius.circular(12),
-          color: colorScheme.surface,
+         color: colorScheme.onSecondary,
           elevation: 8,
           child: ConstrainedBox(
             constraints: BoxConstraints(
@@ -41,9 +41,9 @@ class OpenSourceSoftwareInformationDialogHome extends StatelessWidget {
                           textTheme,
                           '1. Introducción',
                           'Instaboo utiliza componentes y bibliotecas de **software de '
-                              'código abierto** desarrolladas por terceros.\\n\\n'
+                              'código abierto** desarrolladas por terceros.\n\n'
                               'Estos componentes permiten mejorar la funcionalidad, '
-                              'estabilidad y desarrollo del software.\\n\\n'
+                              'estabilidad y desarrollo del software.\n\n'
                               'Agradecemos a las comunidades y desarrolladores que '
                               'contribuyen al ecosistema de software libre y de código '
                               'abierto.',
@@ -52,7 +52,7 @@ class OpenSourceSoftwareInformationDialogHome extends StatelessWidget {
                           textTheme,
                           '2. Licencias de software de terceros',
                           'Los componentes de código abierto utilizados en Instaboo se '
-                              'distribuyen bajo sus respectivas licencias.\\n\\n'
+                              'distribuyen bajo sus respectivas licencias.\n\n'
                               'Estas licencias pueden incluir, entre otras:',
                         ),
                         _bulletList(
@@ -74,7 +74,7 @@ class OpenSourceSoftwareInformationDialogHome extends StatelessWidget {
                           textTheme,
                           '3. Uso de bibliotecas externas',
                           'Instaboo puede utilizar bibliotecas externas para proporcionar '
-                              'distintas funcionalidades del software.\\n\\n'
+                              'distintas funcionalidades del software.\n\n'
                               'Estas bibliotecas pueden incluir herramientas relacionadas con:',
                         ),
                         _bulletList(
@@ -92,7 +92,7 @@ class OpenSourceSoftwareInformationDialogHome extends StatelessWidget {
                           '4. Derechos de los autores originales',
                           'Todos los derechos sobre los componentes de código abierto '
                               'utilizados pertenecen a **sus respectivos autores y '
-                              'titulares de derechos**.\\n\\n'
+                              'titulares de derechos**.\n\n'
                               'El uso de dichos componentes dentro de Instaboo se realiza '
                               'conforme a los términos establecidos en sus respectivas '
                               'licencias.',

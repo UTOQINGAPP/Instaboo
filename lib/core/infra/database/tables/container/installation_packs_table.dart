@@ -1,22 +1,25 @@
 import 'package:drift/drift.dart';
 
-/// Installation packs table (bundles of software).
-/// Tabla de packs de instalación (paquetes de software).
-///
-/// Maps to PostgreSQL: installation_packs
-/// Mapea a PostgreSQL: installation_packs
-@TableIndex(name: 'idx_installation_packs_is_active', columns: {#isActive})
+/// User-defined installation packs (bundles).
+/// Packs de instalación definidos por el usuario (conjuntos).
+@TableIndex(name: 'idx_installation_packs_active', columns: {#isActive})
 class InstallationPacksTable extends Table {
+  @override
+  String get tableName => 'installation_packs';
+
   /// Primary key.
   IntColumn get id => integer().autoIncrement()();
 
-  /// Pack name (unique).
-  TextColumn get name => text().withLength(max: 255).unique()();
+  /// Unique pack name (max 200).
+  TextColumn get name => text().withLength(max: 200).unique()();
 
   /// Optional description.
   TextColumn get description => text().nullable()();
 
-  /// Whether the pack is active.
+  /// Icon reference (max 100).
+  TextColumn get icon => text().withLength(max: 100).nullable()();
+
+  /// Whether the pack is selectable.
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 
   /// Creation timestamp.

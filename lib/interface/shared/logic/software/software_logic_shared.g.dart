@@ -13,47 +13,47 @@ part of 'software_logic_shared.dart';
 /// Lógica compartida de software. Gestiona lista, búsqueda, carga y estado de error.
 /// Solo lectura: lista y búsqueda. Crear/actualizar/eliminar quedan en la lógica de cada layout (ej. biblioteca).
 
-@ProviderFor(LogicSoftwareShared)
-final logicSoftwareSharedProvider = LogicSoftwareSharedProvider._();
+@ProviderFor(SoftwareLogicShared)
+final softwareLogicSharedProvider = SoftwareLogicSharedProvider._();
 
 /// Shared logic for software. Manages list, search, loading and error state.
 /// Read-only: list and search. Create/update/delete stay in layout-specific logic (e.g. library).
 /// Lógica compartida de software. Gestiona lista, búsqueda, carga y estado de error.
 /// Solo lectura: lista y búsqueda. Crear/actualizar/eliminar quedan en la lógica de cada layout (ej. biblioteca).
-final class LogicSoftwareSharedProvider
-    extends $AsyncNotifierProvider<LogicSoftwareShared, SoftwareStateShared> {
+final class SoftwareLogicSharedProvider
+    extends $AsyncNotifierProvider<SoftwareLogicShared, SoftwareStateShared> {
   /// Shared logic for software. Manages list, search, loading and error state.
   /// Read-only: list and search. Create/update/delete stay in layout-specific logic (e.g. library).
   /// Lógica compartida de software. Gestiona lista, búsqueda, carga y estado de error.
   /// Solo lectura: lista y búsqueda. Crear/actualizar/eliminar quedan en la lógica de cada layout (ej. biblioteca).
-  LogicSoftwareSharedProvider._()
+  SoftwareLogicSharedProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'logicSoftwareSharedProvider',
+        name: r'softwareLogicSharedProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$logicSoftwareSharedHash();
+  String debugGetCreateSourceHash() => _$softwareLogicSharedHash();
 
   @$internal
   @override
-  LogicSoftwareShared create() => LogicSoftwareShared();
+  SoftwareLogicShared create() => SoftwareLogicShared();
 }
 
-String _$logicSoftwareSharedHash() =>
-    r'b5d9d0f0e0dc7248db16b2ceab35af000e8b1721';
+String _$softwareLogicSharedHash() =>
+    r'27eb9743ee57b9d778a23c796918f064bf427d87';
 
 /// Shared logic for software. Manages list, search, loading and error state.
 /// Read-only: list and search. Create/update/delete stay in layout-specific logic (e.g. library).
 /// Lógica compartida de software. Gestiona lista, búsqueda, carga y estado de error.
 /// Solo lectura: lista y búsqueda. Crear/actualizar/eliminar quedan en la lógica de cada layout (ej. biblioteca).
 
-abstract class _$LogicSoftwareShared
+abstract class _$SoftwareLogicShared
     extends $AsyncNotifier<SoftwareStateShared> {
   FutureOr<SoftwareStateShared> build();
   @$mustCallSuper

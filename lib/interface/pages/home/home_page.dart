@@ -19,8 +19,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       //ref.read(logicHomeLibraryProvider);
-      ref.read(logicSoftwareSharedProvider);
-      ref.read(logicCategoriesSharedProvider);
+      ref.read(softwareLogicSharedProvider);
+      ref.read(categoriesLogicSharedProvider);
     });
   }
 
@@ -90,7 +90,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.energy_savings_leaf,
+                Icons.install_desktop,
                 color: Colors.black,
                 size: 20,
               ),
@@ -123,7 +123,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.energy_savings_leaf,
+                Icons.library_books,
                 color: Colors.black,
                 size: 20,
               ),
@@ -209,7 +209,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ) => const TermsAndConditionsDialogHome(),
               barrierDismissible: true,
               barrierLabel: 'Cerrar',
-              barrierColor: Colors.black.withOpacity(0.5),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
               transitionDuration: const Duration(milliseconds: 300),
             );
           },
@@ -227,7 +227,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ) => const PrivacyPoliciesDialogHome(),
               barrierDismissible: true,
               barrierLabel: 'Cerrar',
-              barrierColor: Colors.black.withOpacity(0.5),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
               transitionDuration: const Duration(milliseconds: 300),
             );
           },
@@ -245,7 +245,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ) => const ThirdPartySoftwareNoticeDialogHome(),
               barrierDismissible: true,
               barrierLabel: 'Cerrar',
-              barrierColor: Colors.black.withOpacity(0.5),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
               transitionDuration: const Duration(milliseconds: 300),
             );
           },
@@ -263,7 +263,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ) => const LicensesDialogHome(),
               barrierDismissible: true,
               barrierLabel: 'Cerrar',
-              barrierColor: Colors.black.withOpacity(0.5),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
               transitionDuration: const Duration(milliseconds: 300),
             );
           },
@@ -281,7 +281,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ) => const DisclaimerDialogHome(),
               barrierDismissible: true,
               barrierLabel: 'Cerrar',
-              barrierColor: Colors.black.withOpacity(0.5),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
               transitionDuration: const Duration(milliseconds: 300),
             );
           },
@@ -299,23 +299,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ) => const OpenSourceSoftwareInformationDialogHome(),
               barrierDismissible: true,
               barrierLabel: 'Cerrar',
-              barrierColor: Colors.black.withOpacity(0.5),
+              barrierColor: Colors.black.withValues(alpha: 0.5),
               transitionDuration: const Duration(milliseconds: 300),
             );
           },
         ),
 
-        Text(
-          'Instaboo - Todos los derechos reservado',
-          style: textTheme.bodySmall?.copyWith(color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: 20),
-        Text(
-          'Versión 1.0.0',
-          style: textTheme.bodySmall?.copyWith(color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
+        
         SizedBox(height: 20),
         Text(
           '© 2026 Instaboo. Todos los derechos reservados.',

@@ -69,7 +69,7 @@ final class CategoriesStateShared {
 /// Shared logic for categories. Manages list, CRUD, loading and error state.
 /// Lógica compartida de categorías. Gestiona lista, CRUD, carga y estado de error.
 @Riverpod(keepAlive: true)
-class LogicCategoriesShared extends _$LogicCategoriesShared {
+class CategoriesLogicShared extends _$CategoriesLogicShared {
   @override
   Future<CategoriesStateShared> build() async {
     state = const AsyncData(CategoriesStateShared(isLoading: true));
@@ -85,12 +85,12 @@ class LogicCategoriesShared extends _$LogicCategoriesShared {
           const CategoriesStateShared(isLoading: true),
     );
     final consumer = ref.read(categoriesConsumerInjectionProvider);
-    final response = await consumer.listCategories();
+    final response = await consumer.getAll();
     response.resolve(
-      onSuccess: (List<CategoriesDataRule> data, _) {
+      onSuccess: (List<CategoryDataRule> data, _) {
         final List<CategoriesModelShared> models = data
             .map(
-              (CategoriesDataRule item) => CategoriesModelShared(
+              (CategoryDataRule item) => CategoriesModelShared(
                 id: item.id,
                 name: item.name,
                 description: item.description,
@@ -127,9 +127,9 @@ class LogicCategoriesShared extends _$LogicCategoriesShared {
           const CategoriesStateShared(isLoading: true),
     );
     final consumer = ref.read(categoriesConsumerInjectionProvider);
-    final response = await consumer.getCategoryById(categoryId);
+    final response = await consumer.getById(categoryId);
     response.resolve(
-      onSuccess: (CategoriesDataRule data, _) {
+      onSuccess: (CategoryDataRule data, _) {
         state = AsyncData(
           CategoriesStateShared(
             categoriesList: state.value?.categoriesList ?? [],
@@ -168,8 +168,8 @@ class LogicCategoriesShared extends _$LogicCategoriesShared {
           const CategoriesStateShared(isLoading: true),
     );
     final consumer = ref.read(categoriesConsumerInjectionProvider);
-    final response = await consumer.createCategory(
-      name: name,
+    final response = await consumer.create(
+      name,
       description: description,
       icon: icon,
     );
@@ -201,8 +201,8 @@ class LogicCategoriesShared extends _$LogicCategoriesShared {
           const CategoriesStateShared(isLoading: true),
     );
     final consumer = ref.read(categoriesConsumerInjectionProvider);
-    final response = await consumer.updateCategory(
-      categoryId: categoryId,
+    final response = await consumer.update(
+      categoryId,
       name: name,
       description: description,
       icon: icon,
@@ -230,7 +230,7 @@ class LogicCategoriesShared extends _$LogicCategoriesShared {
           const CategoriesStateShared(isLoading: true),
     );
     final consumer = ref.read(categoriesConsumerInjectionProvider);
-    final response = await consumer.deleteCategory(categoryId);
+    final response = await consumer.delete(categoryId);
     response.resolve(
       onSuccess: (_, _) => loadCategories(),
       onFailure: (String message, _) {

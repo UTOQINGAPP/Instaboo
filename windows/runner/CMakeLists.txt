@@ -36,5 +36,12 @@ target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
+# Request administrator privileges via UAC at launch.
+# The /MANIFESTUAC flag embeds the UAC level into the linker-generated manifest,
+# avoiding merge conflicts with runner.exe.manifest (which handles DPI/compat only).
+target_link_options(${BINARY_NAME} PRIVATE
+    "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'"
+)
+
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)

@@ -1,6 +1,12 @@
 # instaboo
 
-A new Flutter project.
+Instaboo — instalador masivo de software para Windows. Permite seleccionar, organizar y lanzar múltiples instaladores en lote desde una biblioteca centralizada.
+
+## Requisitos del sistema
+
+- **Sistema operativo:** Windows 10 (64 bits) o superior. Windows 11 recomendado.
+- **Arquitectura:** x64. Flutter no genera compilaciones de 32 bits para Windows.
+- **Nota de compatibilidad:** Windows 8 y anteriores **no están soportados**. El framework Flutter (canal stable, usado por este proyecto) movió Windows 7 y 8 al nivel "no soportado" y fija el mínimo en Windows 10. Además, el efecto visual *acrylic* de la interfaz requiere Windows 10 build 1803 o superior.
 
 ## Getting Started
 

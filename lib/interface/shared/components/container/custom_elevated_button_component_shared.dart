@@ -136,8 +136,8 @@ class _CustomElevatedButtonComponentSharedState
       return ElevatedButton.styleFrom(
         backgroundColor: cs.surfaceContainerLow,
         foregroundColor: cs.primary,
-        disabledBackgroundColor: cs.onSurface.withOpacity(0.12),
-        disabledForegroundColor: cs.onSurface.withOpacity(0.38),
+        disabledBackgroundColor: cs.onSurface.withValues(alpha: 0.12),
+        disabledForegroundColor: cs.onSurface.withValues(alpha: 0.38),
         shadowColor: cs.shadow,
         elevation: 1,
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -152,8 +152,8 @@ class _CustomElevatedButtonComponentSharedState
     return ElevatedButton.styleFrom(
       backgroundColor: cs.primary,
       foregroundColor: cs.onPrimary,
-      disabledBackgroundColor: cs.onSurface.withOpacity(0.12),
-      disabledForegroundColor: cs.onSurface.withOpacity(0.38),
+      disabledBackgroundColor: cs.onSurface.withValues(alpha: 0.12),
+      disabledForegroundColor: cs.onSurface.withValues(alpha: 0.38),
       shadowColor: theme.shadowColor,
       elevation: 2,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -233,12 +233,11 @@ class _CustomElevatedButtonComponentSharedState
     final WidgetStateProperty<Color?> overlayColorProp =
         merged.overlayColor ?? WidgetStateProperty.resolveWith<Color?>(
           (Set<WidgetState> states) =>
-              resolvedForegroundColor?.withOpacity(0.12),
+              resolvedForegroundColor?.withValues(alpha: 0.12),
         );
 
-    final VisualDensity density =
-        resolvedVisualDensity ?? VisualDensity.standard;
-    final Offset densityAdjustment = density.baseSizeAdjustment;
+    final Offset densityAdjustment =
+        resolvedVisualDensity.baseSizeAdjustment;
     final double dy = densityAdjustment.dy;
     final double dx = math.max(0, densityAdjustment.dx);
     final EdgeInsetsGeometry padding = (resolvedPadding ?? EdgeInsets.zero)
@@ -246,7 +245,7 @@ class _CustomElevatedButtonComponentSharedState
         .clamp(EdgeInsets.zero, EdgeInsetsGeometry.infinity);
 
     final BoxConstraints effectiveConstraints =
-        density.effectiveConstraints(
+        resolvedVisualDensity.effectiveConstraints(
       BoxConstraints(
         minWidth: resolvedMinimumSize?.width ?? 64,
         minHeight: resolvedMinimumSize?.height ?? 36,
@@ -292,7 +291,7 @@ class _CustomElevatedButtonComponentSharedState
     content = Padding(
       padding: padding,
       child: Align(
-        alignment: resolvedAlignment ?? Alignment.center,
+        alignment: resolvedAlignment,
         widthFactor: 1.0,
         heightFactor: 1.0,
         child: content,

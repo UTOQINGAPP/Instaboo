@@ -102,6 +102,15 @@ class _SideMenuViewState extends State<_SideMenuView> {
             ),
             SizedBox(height: 10),
             ItemSideMenuComponentLibrary(
+              icon: Icons.history,
+              title: 'Historial',
+              onTap: () {
+                HistoryPageLibraryRoute().go(context);
+              },
+              selected: location == HistoryPageLibraryRoute().location,
+            ),
+            SizedBox(height: 10),
+            ItemSideMenuComponentLibrary(
               icon: Icons.settings,
               title: 'Configuración',
               onTap: () {

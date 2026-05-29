@@ -45,7 +45,7 @@ final class LogicHomeLibraryProvider
   LogicHomeLibrary create() => LogicHomeLibrary();
 }
 
-String _$logicHomeLibraryHash() => r'9715482b15577ebc55b5c12dd4d9effea96b2b4e';
+String _$logicHomeLibraryHash() => r'167e5b885a08ec154d7906c7fd719d2d52451290';
 
 /// Logic for the library home page. Derives list state from shared software + categories;
 /// delegates load/search/filter to shared; keeps create/update/delete and UI helpers.

@@ -117,7 +117,7 @@ class CustomSearchAndFilterBarComponentShared extends StatelessWidget {
               menuStyle: MenuStyle(
                 visualDensity: VisualDensity.compact,
                 backgroundColor: WidgetStatePropertyAll<Color>(
-                  Colors.white.withValues(alpha: 0.9),
+                  Colors.black87,
                 ),
               ),
               onSelected: onFilterItemSelected,

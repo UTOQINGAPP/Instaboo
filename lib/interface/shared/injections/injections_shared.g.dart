@@ -65,56 +65,60 @@ final class _InstallationServiceInjectionProvider
 String _$_installationServiceInjectionHash() =>
     r'3528e75b69edae24ae98697ceb692c04eb12ce00';
 
-/// Pack service injection. Exposes [PackServiceRule].
-/// Inyección del servicio de packs. Expone [PackServiceRule].
+/// Packs service injection. Exposes [PacksServiceRule].
+/// Inyección del servicio de packs. Expone [PacksServiceRule].
 
-@ProviderFor(_packServiceInjection)
-final _packServiceInjectionProvider = _PackServiceInjectionProvider._();
+@ProviderFor(_packsServiceInjection)
+final _packsServiceInjectionProvider = _PacksServiceInjectionProvider._();
 
-/// Pack service injection. Exposes [PackServiceRule].
-/// Inyección del servicio de packs. Expone [PackServiceRule].
+/// Packs service injection. Exposes [PacksServiceRule].
+/// Inyección del servicio de packs. Expone [PacksServiceRule].
 
-final class _PackServiceInjectionProvider
+final class _PacksServiceInjectionProvider
     extends
-        $FunctionalProvider<PackServiceRule, PackServiceRule, PackServiceRule>
-    with $Provider<PackServiceRule> {
-  /// Pack service injection. Exposes [PackServiceRule].
-  /// Inyección del servicio de packs. Expone [PackServiceRule].
-  _PackServiceInjectionProvider._()
+        $FunctionalProvider<
+          PacksServiceRule,
+          PacksServiceRule,
+          PacksServiceRule
+        >
+    with $Provider<PacksServiceRule> {
+  /// Packs service injection. Exposes [PacksServiceRule].
+  /// Inyección del servicio de packs. Expone [PacksServiceRule].
+  _PacksServiceInjectionProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'_packServiceInjectionProvider',
+        name: r'_packsServiceInjectionProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$_packServiceInjectionHash();
+  String debugGetCreateSourceHash() => _$_packsServiceInjectionHash();
 
   @$internal
   @override
-  $ProviderElement<PackServiceRule> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<PacksServiceRule> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  PackServiceRule create(Ref ref) {
-    return _packServiceInjection(ref);
+  PacksServiceRule create(Ref ref) {
+    return _packsServiceInjection(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(PackServiceRule value) {
+  Override overrideWithValue(PacksServiceRule value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<PackServiceRule>(value),
+      providerOverride: $SyncValueProvider<PacksServiceRule>(value),
     );
   }
 }
 
-String _$_packServiceInjectionHash() =>
-    r'c97ecadb523231816ee4023d0656b0f1391fffb3';
+String _$_packsServiceInjectionHash() =>
+    r'b497cb852d794c52afd8634d85d3b8d4edfd6f7f';
 
 /// Settings service injection. Exposes [SettingsServiceRule].
 /// Inyección del servicio de configuración. Expone [SettingsServiceRule].
@@ -228,62 +232,6 @@ final class _SoftwareServiceInjectionProvider
 String _$_softwareServiceInjectionHash() =>
     r'04cafbefada1d4246e9c941a1d5bb3e093665138';
 
-/// Tracking service injection. Exposes [TrackingServiceRule].
-/// Inyección del servicio de seguimiento. Expone [TrackingServiceRule].
-
-@ProviderFor(_trackingServiceInjection)
-final _trackingServiceInjectionProvider = _TrackingServiceInjectionProvider._();
-
-/// Tracking service injection. Exposes [TrackingServiceRule].
-/// Inyección del servicio de seguimiento. Expone [TrackingServiceRule].
-
-final class _TrackingServiceInjectionProvider
-    extends
-        $FunctionalProvider<
-          TrackingServiceRule,
-          TrackingServiceRule,
-          TrackingServiceRule
-        >
-    with $Provider<TrackingServiceRule> {
-  /// Tracking service injection. Exposes [TrackingServiceRule].
-  /// Inyección del servicio de seguimiento. Expone [TrackingServiceRule].
-  _TrackingServiceInjectionProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'_trackingServiceInjectionProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$_trackingServiceInjectionHash();
-
-  @$internal
-  @override
-  $ProviderElement<TrackingServiceRule> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  TrackingServiceRule create(Ref ref) {
-    return _trackingServiceInjection(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(TrackingServiceRule value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<TrackingServiceRule>(value),
-    );
-  }
-}
-
-String _$_trackingServiceInjectionHash() =>
-    r'4800b614435e715dcfcf800666dc0799c0751f47';
-
 /// Categories service injection. Exposes [CategoriesServiceRule].
 /// Inyección del servicio de categorías. Expone [CategoriesServiceRule].
 
@@ -340,6 +288,291 @@ final class _CategoriesServiceInjectionProvider
 
 String _$_categoriesServiceInjectionHash() =>
     r'76542d71a006be7a2acf23c9b07fb2280608f090';
+
+/// Installer frameworks service injection. Exposes [InstallerFrameworksServiceRule].
+/// Inyección del servicio de frameworks de instalador. Expone [InstallerFrameworksServiceRule].
+
+@ProviderFor(_installerFrameworksServiceInjection)
+final _installerFrameworksServiceInjectionProvider =
+    _InstallerFrameworksServiceInjectionProvider._();
+
+/// Installer frameworks service injection. Exposes [InstallerFrameworksServiceRule].
+/// Inyección del servicio de frameworks de instalador. Expone [InstallerFrameworksServiceRule].
+
+final class _InstallerFrameworksServiceInjectionProvider
+    extends
+        $FunctionalProvider<
+          InstallerFrameworksServiceRule,
+          InstallerFrameworksServiceRule,
+          InstallerFrameworksServiceRule
+        >
+    with $Provider<InstallerFrameworksServiceRule> {
+  /// Installer frameworks service injection. Exposes [InstallerFrameworksServiceRule].
+  /// Inyección del servicio de frameworks de instalador. Expone [InstallerFrameworksServiceRule].
+  _InstallerFrameworksServiceInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_installerFrameworksServiceInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$_installerFrameworksServiceInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<InstallerFrameworksServiceRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  InstallerFrameworksServiceRule create(Ref ref) {
+    return _installerFrameworksServiceInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(InstallerFrameworksServiceRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<InstallerFrameworksServiceRule>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$_installerFrameworksServiceInjectionHash() =>
+    r'55736519b8663536536ac92023bf4e1fe609b00a';
+
+/// Logs service injection. Exposes [LogsServiceRule].
+/// Inyección del servicio de logs. Expone [LogsServiceRule].
+
+@ProviderFor(_logsServiceInjection)
+final _logsServiceInjectionProvider = _LogsServiceInjectionProvider._();
+
+/// Logs service injection. Exposes [LogsServiceRule].
+/// Inyección del servicio de logs. Expone [LogsServiceRule].
+
+final class _LogsServiceInjectionProvider
+    extends
+        $FunctionalProvider<LogsServiceRule, LogsServiceRule, LogsServiceRule>
+    with $Provider<LogsServiceRule> {
+  /// Logs service injection. Exposes [LogsServiceRule].
+  /// Inyección del servicio de logs. Expone [LogsServiceRule].
+  _LogsServiceInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_logsServiceInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$_logsServiceInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<LogsServiceRule> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LogsServiceRule create(Ref ref) {
+    return _logsServiceInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LogsServiceRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LogsServiceRule>(value),
+    );
+  }
+}
+
+String _$_logsServiceInjectionHash() =>
+    r'75e3d46c0af0616e6274968052e3ca0f2b8bc695';
+
+/// Dependencies service injection. Exposes [DependenciesServiceRule].
+/// Inyección del servicio de dependencias. Expone [DependenciesServiceRule].
+
+@ProviderFor(_dependenciesServiceInjection)
+final _dependenciesServiceInjectionProvider =
+    _DependenciesServiceInjectionProvider._();
+
+/// Dependencies service injection. Exposes [DependenciesServiceRule].
+/// Inyección del servicio de dependencias. Expone [DependenciesServiceRule].
+
+final class _DependenciesServiceInjectionProvider
+    extends
+        $FunctionalProvider<
+          DependenciesServiceRule,
+          DependenciesServiceRule,
+          DependenciesServiceRule
+        >
+    with $Provider<DependenciesServiceRule> {
+  /// Dependencies service injection. Exposes [DependenciesServiceRule].
+  /// Inyección del servicio de dependencias. Expone [DependenciesServiceRule].
+  _DependenciesServiceInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_dependenciesServiceInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$_dependenciesServiceInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<DependenciesServiceRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  DependenciesServiceRule create(Ref ref) {
+    return _dependenciesServiceInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DependenciesServiceRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DependenciesServiceRule>(value),
+    );
+  }
+}
+
+String _$_dependenciesServiceInjectionHash() =>
+    r'fdccd9a445c8fd6c14cb4b6f9189b99c5039dd0e';
+
+/// Installers service injection. Exposes [InstallersServiceRule].
+/// Inyección del servicio de instaladores. Expone [InstallersServiceRule].
+
+@ProviderFor(_installersServiceInjection)
+final _installersServiceInjectionProvider =
+    _InstallersServiceInjectionProvider._();
+
+/// Installers service injection. Exposes [InstallersServiceRule].
+/// Inyección del servicio de instaladores. Expone [InstallersServiceRule].
+
+final class _InstallersServiceInjectionProvider
+    extends
+        $FunctionalProvider<
+          InstallersServiceRule,
+          InstallersServiceRule,
+          InstallersServiceRule
+        >
+    with $Provider<InstallersServiceRule> {
+  /// Installers service injection. Exposes [InstallersServiceRule].
+  /// Inyección del servicio de instaladores. Expone [InstallersServiceRule].
+  _InstallersServiceInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_installersServiceInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$_installersServiceInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<InstallersServiceRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  InstallersServiceRule create(Ref ref) {
+    return _installersServiceInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(InstallersServiceRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<InstallersServiceRule>(value),
+    );
+  }
+}
+
+String _$_installersServiceInjectionHash() =>
+    r'b387847a307625c4862d340ecef5b53721c18dc4';
+
+/// Software registration service injection. Exposes [SoftwareRegistrationServiceRule].
+/// Inyección del servicio de registro de software. Expone [SoftwareRegistrationServiceRule].
+
+@ProviderFor(_softwareRegistrationServiceInjection)
+final _softwareRegistrationServiceInjectionProvider =
+    _SoftwareRegistrationServiceInjectionProvider._();
+
+/// Software registration service injection. Exposes [SoftwareRegistrationServiceRule].
+/// Inyección del servicio de registro de software. Expone [SoftwareRegistrationServiceRule].
+
+final class _SoftwareRegistrationServiceInjectionProvider
+    extends
+        $FunctionalProvider<
+          SoftwareRegistrationServiceRule,
+          SoftwareRegistrationServiceRule,
+          SoftwareRegistrationServiceRule
+        >
+    with $Provider<SoftwareRegistrationServiceRule> {
+  /// Software registration service injection. Exposes [SoftwareRegistrationServiceRule].
+  /// Inyección del servicio de registro de software. Expone [SoftwareRegistrationServiceRule].
+  _SoftwareRegistrationServiceInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_softwareRegistrationServiceInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$_softwareRegistrationServiceInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<SoftwareRegistrationServiceRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SoftwareRegistrationServiceRule create(Ref ref) {
+    return _softwareRegistrationServiceInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SoftwareRegistrationServiceRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SoftwareRegistrationServiceRule>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$_softwareRegistrationServiceInjectionHash() =>
+    r'761a83c29cacceb70e3b51de72840ba303dd42b5';
 
 /// Installation consumer injection. Exposes [InstallationConsumerRule].
 /// Inyección del consumidor de instalaciones. Expone [InstallationConsumerRule].
@@ -398,60 +631,61 @@ final class InstallationConsumerInjectionProvider
 String _$installationConsumerInjectionHash() =>
     r'bd774cf420d7aa1ba1478b5cb2af06dcb32ee369';
 
-/// Pack consumer injection. Exposes [PackConsumerRule].
-/// Inyección del consumidor de packs. Expone [PackConsumerRule].
+/// Packs consumer injection. Exposes [PacksConsumerRule].
+/// Inyección del consumidor de packs. Expone [PacksConsumerRule].
 
-@ProviderFor(packConsumerInjection)
-final packConsumerInjectionProvider = PackConsumerInjectionProvider._();
+@ProviderFor(packsConsumerInjection)
+final packsConsumerInjectionProvider = PacksConsumerInjectionProvider._();
 
-/// Pack consumer injection. Exposes [PackConsumerRule].
-/// Inyección del consumidor de packs. Expone [PackConsumerRule].
+/// Packs consumer injection. Exposes [PacksConsumerRule].
+/// Inyección del consumidor de packs. Expone [PacksConsumerRule].
 
-final class PackConsumerInjectionProvider
+final class PacksConsumerInjectionProvider
     extends
         $FunctionalProvider<
-          PackConsumerRule,
-          PackConsumerRule,
-          PackConsumerRule
+          PacksConsumerRule,
+          PacksConsumerRule,
+          PacksConsumerRule
         >
-    with $Provider<PackConsumerRule> {
-  /// Pack consumer injection. Exposes [PackConsumerRule].
-  /// Inyección del consumidor de packs. Expone [PackConsumerRule].
-  PackConsumerInjectionProvider._()
+    with $Provider<PacksConsumerRule> {
+  /// Packs consumer injection. Exposes [PacksConsumerRule].
+  /// Inyección del consumidor de packs. Expone [PacksConsumerRule].
+  PacksConsumerInjectionProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'packConsumerInjectionProvider',
+        name: r'packsConsumerInjectionProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$packConsumerInjectionHash();
+  String debugGetCreateSourceHash() => _$packsConsumerInjectionHash();
 
   @$internal
   @override
-  $ProviderElement<PackConsumerRule> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<PacksConsumerRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  PackConsumerRule create(Ref ref) {
-    return packConsumerInjection(ref);
+  PacksConsumerRule create(Ref ref) {
+    return packsConsumerInjection(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(PackConsumerRule value) {
+  Override overrideWithValue(PacksConsumerRule value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<PackConsumerRule>(value),
+      providerOverride: $SyncValueProvider<PacksConsumerRule>(value),
     );
   }
 }
 
-String _$packConsumerInjectionHash() =>
-    r'd45f1d391a47bc46be79db9cb62bd004ddc0e367';
+String _$packsConsumerInjectionHash() =>
+    r'1cebf649d93debde6600dd513d690a3256859f22';
 
 /// Settings consumer injection. Exposes [SettingsConsumerRule].
 /// Inyección del consumidor de configuración. Expone [SettingsConsumerRule].
@@ -565,62 +799,6 @@ final class SoftwareConsumerInjectionProvider
 String _$softwareConsumerInjectionHash() =>
     r'596139921ae8feedb53b6278b1cffcb05a93ac02';
 
-/// Tracking consumer injection. Exposes [TrackingConsumerRule].
-/// Inyección del consumidor de seguimiento. Expone [TrackingConsumerRule].
-
-@ProviderFor(trackingConsumerInjection)
-final trackingConsumerInjectionProvider = TrackingConsumerInjectionProvider._();
-
-/// Tracking consumer injection. Exposes [TrackingConsumerRule].
-/// Inyección del consumidor de seguimiento. Expone [TrackingConsumerRule].
-
-final class TrackingConsumerInjectionProvider
-    extends
-        $FunctionalProvider<
-          TrackingConsumerRule,
-          TrackingConsumerRule,
-          TrackingConsumerRule
-        >
-    with $Provider<TrackingConsumerRule> {
-  /// Tracking consumer injection. Exposes [TrackingConsumerRule].
-  /// Inyección del consumidor de seguimiento. Expone [TrackingConsumerRule].
-  TrackingConsumerInjectionProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'trackingConsumerInjectionProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$trackingConsumerInjectionHash();
-
-  @$internal
-  @override
-  $ProviderElement<TrackingConsumerRule> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  TrackingConsumerRule create(Ref ref) {
-    return trackingConsumerInjection(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(TrackingConsumerRule value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<TrackingConsumerRule>(value),
-    );
-  }
-}
-
-String _$trackingConsumerInjectionHash() =>
-    r'ec6b931d99d4665fc2e3029be277d38ecd168326';
-
 /// Categories consumer injection. Exposes [CategoriesConsumerRule].
 /// Inyección del consumidor de categorías. Expone [CategoriesConsumerRule].
 
@@ -677,3 +855,292 @@ final class CategoriesConsumerInjectionProvider
 
 String _$categoriesConsumerInjectionHash() =>
     r'def8a5355b396c39a7b85e9512cec10507f56b49';
+
+/// Installer frameworks consumer injection. Exposes [InstallerFrameworksConsumerRule].
+/// Inyección del consumidor de frameworks de instalador. Expone [InstallerFrameworksConsumerRule].
+
+@ProviderFor(installerFrameworksConsumerInjection)
+final installerFrameworksConsumerInjectionProvider =
+    InstallerFrameworksConsumerInjectionProvider._();
+
+/// Installer frameworks consumer injection. Exposes [InstallerFrameworksConsumerRule].
+/// Inyección del consumidor de frameworks de instalador. Expone [InstallerFrameworksConsumerRule].
+
+final class InstallerFrameworksConsumerInjectionProvider
+    extends
+        $FunctionalProvider<
+          InstallerFrameworksConsumerRule,
+          InstallerFrameworksConsumerRule,
+          InstallerFrameworksConsumerRule
+        >
+    with $Provider<InstallerFrameworksConsumerRule> {
+  /// Installer frameworks consumer injection. Exposes [InstallerFrameworksConsumerRule].
+  /// Inyección del consumidor de frameworks de instalador. Expone [InstallerFrameworksConsumerRule].
+  InstallerFrameworksConsumerInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'installerFrameworksConsumerInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$installerFrameworksConsumerInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<InstallerFrameworksConsumerRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  InstallerFrameworksConsumerRule create(Ref ref) {
+    return installerFrameworksConsumerInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(InstallerFrameworksConsumerRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<InstallerFrameworksConsumerRule>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$installerFrameworksConsumerInjectionHash() =>
+    r'673c126b36f05141edc39de4e3784263d6c3caca';
+
+/// Logs consumer injection. Exposes [LogsConsumerRule].
+/// Inyección del consumidor de logs. Expone [LogsConsumerRule].
+
+@ProviderFor(logsConsumerInjection)
+final logsConsumerInjectionProvider = LogsConsumerInjectionProvider._();
+
+/// Logs consumer injection. Exposes [LogsConsumerRule].
+/// Inyección del consumidor de logs. Expone [LogsConsumerRule].
+
+final class LogsConsumerInjectionProvider
+    extends
+        $FunctionalProvider<
+          LogsConsumerRule,
+          LogsConsumerRule,
+          LogsConsumerRule
+        >
+    with $Provider<LogsConsumerRule> {
+  /// Logs consumer injection. Exposes [LogsConsumerRule].
+  /// Inyección del consumidor de logs. Expone [LogsConsumerRule].
+  LogsConsumerInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'logsConsumerInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$logsConsumerInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<LogsConsumerRule> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  LogsConsumerRule create(Ref ref) {
+    return logsConsumerInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LogsConsumerRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LogsConsumerRule>(value),
+    );
+  }
+}
+
+String _$logsConsumerInjectionHash() =>
+    r'bfed4b5f2abf2d32094123618d5efd8d3269f349';
+
+/// Dependencies consumer injection. Exposes [DependenciesConsumerRule].
+/// Inyección del consumidor de dependencias. Expone [DependenciesConsumerRule].
+
+@ProviderFor(dependenciesConsumerInjection)
+final dependenciesConsumerInjectionProvider =
+    DependenciesConsumerInjectionProvider._();
+
+/// Dependencies consumer injection. Exposes [DependenciesConsumerRule].
+/// Inyección del consumidor de dependencias. Expone [DependenciesConsumerRule].
+
+final class DependenciesConsumerInjectionProvider
+    extends
+        $FunctionalProvider<
+          DependenciesConsumerRule,
+          DependenciesConsumerRule,
+          DependenciesConsumerRule
+        >
+    with $Provider<DependenciesConsumerRule> {
+  /// Dependencies consumer injection. Exposes [DependenciesConsumerRule].
+  /// Inyección del consumidor de dependencias. Expone [DependenciesConsumerRule].
+  DependenciesConsumerInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'dependenciesConsumerInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$dependenciesConsumerInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<DependenciesConsumerRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  DependenciesConsumerRule create(Ref ref) {
+    return dependenciesConsumerInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DependenciesConsumerRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DependenciesConsumerRule>(value),
+    );
+  }
+}
+
+String _$dependenciesConsumerInjectionHash() =>
+    r'000ee343bb27a9875378ba6de90ad790a09694b1';
+
+/// Installers consumer injection. Exposes [InstallersConsumerRule].
+/// Inyección del consumidor de instaladores. Expone [InstallersConsumerRule].
+
+@ProviderFor(installersConsumerInjection)
+final installersConsumerInjectionProvider =
+    InstallersConsumerInjectionProvider._();
+
+/// Installers consumer injection. Exposes [InstallersConsumerRule].
+/// Inyección del consumidor de instaladores. Expone [InstallersConsumerRule].
+
+final class InstallersConsumerInjectionProvider
+    extends
+        $FunctionalProvider<
+          InstallersConsumerRule,
+          InstallersConsumerRule,
+          InstallersConsumerRule
+        >
+    with $Provider<InstallersConsumerRule> {
+  /// Installers consumer injection. Exposes [InstallersConsumerRule].
+  /// Inyección del consumidor de instaladores. Expone [InstallersConsumerRule].
+  InstallersConsumerInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'installersConsumerInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$installersConsumerInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<InstallersConsumerRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  InstallersConsumerRule create(Ref ref) {
+    return installersConsumerInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(InstallersConsumerRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<InstallersConsumerRule>(value),
+    );
+  }
+}
+
+String _$installersConsumerInjectionHash() =>
+    r'560df2badff936102c13fd79d7374bbc55639a87';
+
+/// Software registration consumer injection. Exposes [SoftwareRegistrationConsumerRule].
+/// Inyección del consumidor de registro de software. Expone [SoftwareRegistrationConsumerRule].
+
+@ProviderFor(softwareRegistrationConsumerInjection)
+final softwareRegistrationConsumerInjectionProvider =
+    SoftwareRegistrationConsumerInjectionProvider._();
+
+/// Software registration consumer injection. Exposes [SoftwareRegistrationConsumerRule].
+/// Inyección del consumidor de registro de software. Expone [SoftwareRegistrationConsumerRule].
+
+final class SoftwareRegistrationConsumerInjectionProvider
+    extends
+        $FunctionalProvider<
+          SoftwareRegistrationConsumerRule,
+          SoftwareRegistrationConsumerRule,
+          SoftwareRegistrationConsumerRule
+        >
+    with $Provider<SoftwareRegistrationConsumerRule> {
+  /// Software registration consumer injection. Exposes [SoftwareRegistrationConsumerRule].
+  /// Inyección del consumidor de registro de software. Expone [SoftwareRegistrationConsumerRule].
+  SoftwareRegistrationConsumerInjectionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'softwareRegistrationConsumerInjectionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$softwareRegistrationConsumerInjectionHash();
+
+  @$internal
+  @override
+  $ProviderElement<SoftwareRegistrationConsumerRule> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  SoftwareRegistrationConsumerRule create(Ref ref) {
+    return softwareRegistrationConsumerInjection(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SoftwareRegistrationConsumerRule value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SoftwareRegistrationConsumerRule>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$softwareRegistrationConsumerInjectionHash() =>
+    r'832b59d6eb6242d955412131cffb8f802943372b';

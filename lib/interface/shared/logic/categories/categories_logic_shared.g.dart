@@ -11,42 +11,42 @@ part of 'categories_logic_shared.dart';
 /// Shared logic for categories. Manages list, CRUD, loading and error state.
 /// Lógica compartida de categorías. Gestiona lista, CRUD, carga y estado de error.
 
-@ProviderFor(LogicCategoriesShared)
-final logicCategoriesSharedProvider = LogicCategoriesSharedProvider._();
+@ProviderFor(CategoriesLogicShared)
+final categoriesLogicSharedProvider = CategoriesLogicSharedProvider._();
 
 /// Shared logic for categories. Manages list, CRUD, loading and error state.
 /// Lógica compartida de categorías. Gestiona lista, CRUD, carga y estado de error.
-final class LogicCategoriesSharedProvider
+final class CategoriesLogicSharedProvider
     extends
-        $AsyncNotifierProvider<LogicCategoriesShared, CategoriesStateShared> {
+        $AsyncNotifierProvider<CategoriesLogicShared, CategoriesStateShared> {
   /// Shared logic for categories. Manages list, CRUD, loading and error state.
   /// Lógica compartida de categorías. Gestiona lista, CRUD, carga y estado de error.
-  LogicCategoriesSharedProvider._()
+  CategoriesLogicSharedProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'logicCategoriesSharedProvider',
+        name: r'categoriesLogicSharedProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$logicCategoriesSharedHash();
+  String debugGetCreateSourceHash() => _$categoriesLogicSharedHash();
 
   @$internal
   @override
-  LogicCategoriesShared create() => LogicCategoriesShared();
+  CategoriesLogicShared create() => CategoriesLogicShared();
 }
 
-String _$logicCategoriesSharedHash() =>
-    r'd04030691aa8b6449c2e32cbfcbe4859f1895aa9';
+String _$categoriesLogicSharedHash() =>
+    r'0490bfda59caff72616db51ad9d8fbc2fe2453c2';
 
 /// Shared logic for categories. Manages list, CRUD, loading and error state.
 /// Lógica compartida de categorías. Gestiona lista, CRUD, carga y estado de error.
 
-abstract class _$LogicCategoriesShared
+abstract class _$CategoriesLogicShared
     extends $AsyncNotifier<CategoriesStateShared> {
   FutureOr<CategoriesStateShared> build();
   @$mustCallSuper

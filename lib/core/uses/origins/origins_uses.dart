@@ -1,10 +1,9 @@
-// Barrel export for use-layer origins (mirror of Drift/DB row types).
-// Export barrel de orígenes de la capa use (réplica de tipos fila Drift/DB).
-
-export 'container/application_logs_origin_use.dart';
-export 'container/categories_origin_use.dart';
-export 'container/installation_history_origin_use.dart';
-export 'container/installation_origin_use.dart';
-export 'container/pack_origin_use.dart';
-export 'container/software_origin_use.dart';
-export 'container/user_preferences_origin_use.dart';
+export 'categories/category_origin_use.dart';
+export 'installer_frameworks/installer_framework_origin_use.dart';
+export 'dependencies/dependency_origin_use.dart';
+export 'installers/installer_origin_use.dart';
+export 'packs/pack_origin_use.dart';
+export 'installation/installation_origins_uses.dart';
+export 'logs/log_origin_use.dart';
+export 'settings/setting_origin_use.dart';
+export 'software/software_origin_use.dart';

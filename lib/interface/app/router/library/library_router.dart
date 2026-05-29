@@ -22,6 +22,7 @@ List<RouteBase> get libraryRouter => $appRoutes;
     TypedGoRoute<HomePageLibraryRoute>(path: '/library/home'),
     TypedGoRoute<SettingsPageLibraryRoute>(path: '/library/settings'),
     TypedGoRoute<PackagesPageLibraryRoute>(path: '/library/packages'),
+    TypedGoRoute<HistoryPageLibraryRoute>(path: '/library/history'),
   ],
 )
 class LibraryShellRoute extends ShellRouteData {
@@ -82,5 +83,19 @@ class PackagesPageLibraryRoute extends GoRouteData
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const PackagesPageLibrary();
+  }
+}
+
+/// English: Route definition for the library history page.
+/// Español: Definición de ruta para la página de historial de biblioteca.
+class HistoryPageLibraryRoute extends GoRouteData
+    with $HistoryPageLibraryRoute {
+  /// English: Creates the library history page route.
+  /// Español: Crea la ruta de página de historial de biblioteca.
+  const HistoryPageLibraryRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const HistoryPageLibrary();
   }
 }

@@ -24,6 +24,10 @@ RouteBase get $libraryShellRoute => ShellRouteData.$route(
       path: '/library/packages',
       factory: $PackagesPageLibraryRoute._fromState,
     ),
+    GoRouteData.$route(
+      path: '/library/history',
+      factory: $HistoryPageLibraryRoute._fromState,
+    ),
   ],
 );
 
@@ -80,6 +84,27 @@ mixin $PackagesPageLibraryRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/library/packages');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $HistoryPageLibraryRoute on GoRouteData {
+  static HistoryPageLibraryRoute _fromState(GoRouterState state) =>
+      const HistoryPageLibraryRoute();
+
+  @override
+  String get location => GoRouteData.$location('/library/history');
 
   @override
   void go(BuildContext context) => context.go(location);
