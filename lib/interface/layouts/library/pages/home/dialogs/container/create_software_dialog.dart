@@ -446,7 +446,7 @@ class _AddSoftwareDialogLibraryState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DropdownButtonFormField<int?>(
-              value: _selectedFrameworkId,
+              initialValue: _selectedFrameworkId,
               decoration: InputDecoration(
                 labelText: 'Framework del instalador',
                 hintText: 'Detectado automaticamente o selecciona manualmente',
@@ -645,7 +645,7 @@ class _AddSoftwareDialogLibraryState
               children: [
                 Expanded(
                   child: DropdownButtonFormField<int>(
-                    value: _selectedDepToAdd,
+                    initialValue: _selectedDepToAdd,
                     decoration: InputDecoration(
                       labelText: 'Agregar dependencia',
                       border: OutlineInputBorder(

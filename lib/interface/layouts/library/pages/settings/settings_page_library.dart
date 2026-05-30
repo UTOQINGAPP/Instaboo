@@ -372,14 +372,6 @@ class _FallbackGlobalCard extends StatefulWidget {
 }
 
 class _FallbackGlobalCardState extends State<_FallbackGlobalCard> {
-  late String _args;
-
-  @override
-  void initState() {
-    super.initState();
-    _args = widget.initialValue;
-  }
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -409,7 +401,6 @@ class _FallbackGlobalCardState extends State<_FallbackGlobalCard> {
             label: 'Argumentos por defecto',
             hint: 'Ej: /S  y presiona Enter',
             onChanged: (v) {
-              _args = v;
               widget.onChanged(v);
             },
           ),

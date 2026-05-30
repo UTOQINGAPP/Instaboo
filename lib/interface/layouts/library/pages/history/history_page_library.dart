@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/core/rules/data/data_rules.dart';
@@ -70,7 +68,7 @@ final class HistoryFilterState {
 
 // ─── Contextual stats ─────────────────────────────────────────────────────────
 
-final class _ContextualStats {
+final class ContextualStats {
   final int total;
   final int success;
   final int failed;
@@ -78,7 +76,7 @@ final class _ContextualStats {
   final double successRate;
   final Duration? avgDuration;
 
-  const _ContextualStats({
+  const ContextualStats({
     required this.total,
     required this.success,
     required this.failed,
@@ -87,9 +85,9 @@ final class _ContextualStats {
     this.avgDuration,
   });
 
-  factory _ContextualStats.fromList(List<HistoryDataRule> items) {
+  factory ContextualStats.fromList(List<HistoryDataRule> items) {
     if (items.isEmpty) {
-      return const _ContextualStats(
+      return const ContextualStats(
         total: 0,
         success: 0,
         failed: 0,
@@ -106,7 +104,7 @@ final class _ContextualStats {
     final avg = durations.isEmpty
         ? null
         : Duration(seconds: (durations.reduce((a, b) => a + b) / durations.length).round());
-    return _ContextualStats(
+    return ContextualStats(
       total: items.length,
       success: s,
       failed: f,
@@ -123,7 +121,7 @@ final class HistoryViewState {
   final List<HistoryDataRule> allHistory;
   final List<HistoryDataRule> filtered;
   final Map<String, List<HistoryDataRule>> groupedByDate;
-  final _ContextualStats stats;
+  final ContextualStats stats;
   final HistoryFilterState filter;
 
   // Reference data for filters.
@@ -214,7 +212,7 @@ final class HistoryViewState {
       allHistory: allHistory,
       filtered: list,
       groupedByDate: _groupByDate(list),
-      stats: _ContextualStats.fromList(list),
+      stats: ContextualStats.fromList(list),
       filter: newFilter,
       categories: categories,
       packNames: packNames,
@@ -229,7 +227,7 @@ final class HistoryViewState {
   ) {
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
-    final groups = LinkedHashMap<String, List<HistoryDataRule>>();
+    final groups = <String, List<HistoryDataRule>>{};
 
     for (final item in items) {
       final local = item.completedAt.toLocal();
@@ -329,7 +327,7 @@ class HistoryPageNotifier extends AsyncNotifier<HistoryViewState> {
       allHistory: history,
       filtered: history,
       groupedByDate: HistoryViewState._groupByDate(history),
-      stats: _ContextualStats.fromList(history),
+      stats: ContextualStats.fromList(history),
       filter: initialFilter,
       categories: categories,
       packNames: packNames,
@@ -527,7 +525,7 @@ class _HistoryContent extends ConsumerWidget {
 // ─── Stats row ────────────────────────────────────────────────────────────────
 
 class _StatsRow extends StatelessWidget {
-  final _ContextualStats stats;
+  final ContextualStats stats;
   const _StatsRow({required this.stats});
 
   @override

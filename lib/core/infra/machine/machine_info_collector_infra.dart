@@ -62,7 +62,7 @@ class MachineInfoCollectorInfra {
       if (domain.isNotEmpty) 'domain': domain,
       'osVersion': osVersion,
       'processors': processors,
-      if (totalRamMb != null) 'totalRamMb': totalRamMb,
+      'totalRamMb': ?totalRamMb,
     };
 
     return _cache!;
