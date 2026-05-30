@@ -36,7 +36,6 @@ void main() {
         keys,
         containsAll(<String>[
           'parallel_installs',
-          'run_as_admin',
           'notifications_enabled',
           'theme',
           'language',

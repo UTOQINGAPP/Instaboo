@@ -26,7 +26,7 @@ final _frameworksProvider =
 });
 
 // Keys excluidas de la sección General.
-const _hiddenKeys = {'default_silent_args', 'run_as_admin'};
+const _hiddenKeys = {'default_silent_args'};
 
 // Keys de tipo entero que el usuario puede editar.
 const _editableIntKeys = {'parallel_installs', 'install_timeout_minutes'};

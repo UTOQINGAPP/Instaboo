@@ -133,6 +133,13 @@ class AppDatabaseInfra extends _$AppDatabaseInfra {
             " VALUES ('install_timeout_minutes', '15', 'integer',"
             " 'Per-installer timeout in minutes; 0 disables it.');",
           );
+          // Remove the obsolete run_as_admin setting: the app always runs
+          // elevated via the manifest, so this flag is dead.
+          // Elimina el setting obsoleto run_as_admin: la app siempre corre
+          // elevada vía el manifiesto, así que esta bandera es código muerto.
+          await customStatement(
+            "DELETE FROM settings WHERE key = 'run_as_admin';",
+          );
         },
       );
 
@@ -166,14 +173,6 @@ class AppDatabaseInfra extends _$AppDatabaseInfra {
             valueType: const Value('integer'),
             description: const Value(
               'Allowed concurrent installs. / Instalaciones simultaneas permitidas.',
-            ),
-          ),
-          SettingsTableCompanion.insert(
-            prefKey: 'run_as_admin',
-            prefValue: const Value('0'),
-            valueType: const Value('boolean'),
-            description: const Value(
-              'Run installers elevated. / Ejecutar instaladores como administrador.',
             ),
           ),
           SettingsTableCompanion.insert(

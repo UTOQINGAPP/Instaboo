@@ -21,14 +21,6 @@ class SettingsServiceUse implements SettingsServiceRule {
           ),
         ),
         SettingsTableCompanion.insert(
-          prefKey: 'run_as_admin',
-          prefValue: const Value('0'),
-          valueType: const Value('boolean'),
-          description: const Value(
-            'Run installers elevated. / Ejecutar instaladores como administrador.',
-          ),
-        ),
-        SettingsTableCompanion.insert(
           prefKey: 'notifications_enabled',
           prefValue: const Value('1'),
           valueType: const Value('boolean'),
