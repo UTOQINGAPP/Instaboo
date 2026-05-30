@@ -128,6 +128,11 @@ class AppDatabaseInfra extends _$AppDatabaseInfra {
             " VALUES ('default_silent_args', '', 'string',"
             " 'Default silent install arguments applied to all software when no specific args are set.');",
           );
+          await customStatement(
+            "INSERT OR IGNORE INTO settings (key, value, value_type, description)"
+            " VALUES ('install_timeout_minutes', '15', 'integer',"
+            " 'Per-installer timeout in minutes; 0 disables it.');",
+          );
         },
       );
 
@@ -217,6 +222,14 @@ class AppDatabaseInfra extends _$AppDatabaseInfra {
             valueType: const Value('string'),
             description: const Value(
               'Default silent install arguments applied to all software when no specific args are set. / Argumentos silenciosos por defecto aplicados a todo el software cuando no se especifican args propios.',
+            ),
+          ),
+          SettingsTableCompanion.insert(
+            prefKey: 'install_timeout_minutes',
+            prefValue: const Value('15'),
+            valueType: const Value('integer'),
+            description: const Value(
+              'Per-installer timeout in minutes; 0 disables it. / Timeout por instalador en minutos; 0 lo desactiva.',
             ),
           ),
         ],

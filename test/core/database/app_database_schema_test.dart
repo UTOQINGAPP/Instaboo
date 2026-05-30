@@ -43,6 +43,7 @@ void main() {
           'auto_verify_on_startup',
           'max_log_days',
           'default_silent_args',
+          'install_timeout_minutes',
         ]),
       );
     });

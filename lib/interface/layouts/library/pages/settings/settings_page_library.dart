@@ -29,11 +29,18 @@ final _frameworksProvider =
 const _hiddenKeys = {'default_silent_args', 'run_as_admin'};
 
 // Keys de tipo entero que el usuario puede editar.
-const _editableIntKeys = {'parallel_installs'};
+const _editableIntKeys = {'parallel_installs', 'install_timeout_minutes'};
+
+// Rango (min, max, step) del selector para cada setting entero editable.
+const _intRanges = <String, ({int min, int max, int step})>{
+  'parallel_installs': (min: 1, max: 10, step: 1),
+  'install_timeout_minutes': (min: 0, max: 180, step: 5),
+};
 
 // Labels en español para cada setting.
 const _settingLabels = <String, String>{
   'auto_verify_on_startup': 'Verificar al iniciar',
+  'install_timeout_minutes': 'Timeout de instalación (min)',
   'language': 'Idioma',
   'max_log_days': 'Días máximos de logs',
   'notifications_enabled': 'Notificaciones',
@@ -44,6 +51,7 @@ const _settingLabels = <String, String>{
 // Descripciones en español para cada setting.
 const _settingDescriptions = <String, String>{
   'auto_verify_on_startup': 'Verifica la integridad de los instaladores al abrir la app',
+  'install_timeout_minutes': 'Minutos antes de cancelar un instalador colgado (0 lo desactiva)',
   'language': 'Idioma de la interfaz',
   'max_log_days': 'Cantidad de días que se conservan los registros de actividad',
   'notifications_enabled': 'Muestra notificaciones del sistema durante las instalaciones',
@@ -447,11 +455,14 @@ class _SettingTile extends StatelessWidget {
     if (value is bool) {
       trailing = Switch(value: value as bool, onChanged: onBoolChanged);
     } else if (isEditableInt) {
-      final current = (value as num?)?.toInt() ?? 1;
+      final range =
+          _intRanges[settingKey] ?? (min: 1, max: 10, step: 1);
+      final current = (value as num?)?.toInt() ?? range.min;
       trailing = _IntStepper(
         value: current,
-        min: 1,
-        max: 10,
+        min: range.min,
+        max: range.max,
+        step: range.step,
         onChanged: onIntChanged,
       );
     } else {
@@ -488,12 +499,14 @@ class _IntStepper extends StatelessWidget {
   final int value;
   final int min;
   final int max;
+  final int step;
   final ValueChanged<int>? onChanged;
 
   const _IntStepper({
     required this.value,
     required this.min,
     required this.max,
+    this.step = 1,
     this.onChanged,
   });
 
@@ -506,10 +519,12 @@ class _IntStepper extends StatelessWidget {
           icon: const Icon(Icons.remove, size: 18, color: Colors.white70),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          onPressed: value > min ? () => onChanged?.call(value - 1) : null,
+          onPressed: value > min
+              ? () => onChanged?.call((value - step).clamp(min, max))
+              : null,
         ),
         SizedBox(
-          width: 28,
+          width: 34,
           child: Text(
             '$value',
             textAlign: TextAlign.center,
@@ -524,7 +539,9 @@ class _IntStepper extends StatelessWidget {
           icon: const Icon(Icons.add, size: 18, color: Colors.white70),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          onPressed: value < max ? () => onChanged?.call(value + 1) : null,
+          onPressed: value < max
+              ? () => onChanged?.call((value + step).clamp(min, max))
+              : null,
         ),
       ],
     );

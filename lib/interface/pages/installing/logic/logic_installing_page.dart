@@ -64,6 +64,12 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
   /// Máximo de instalaciones simultáneas (de la configuración `parallel_installs`).
   int _maxParallel = 1;
 
+  /// Per-installer timeout in minutes (from `install_timeout_minutes`).
+  /// 0 disables the timeout entirely.
+  /// Timeout por instalador en minutos (de `install_timeout_minutes`).
+  /// 0 desactiva el timeout por completo.
+  int _timeoutMinutes = 15;
+
   /// Set to true in onDispose so async callbacks don't touch dead state.
   /// Puesto a true en onDispose para que callbacks asincrónicos no toquen estado muerto.
   bool _disposed = false;
@@ -102,6 +108,17 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     _maxParallel = parallelResp.resolve(
       onSuccess: (v, _) => v.clamp(1, 10),
       onFailure: (_, _) => 1,
+    );
+
+    // Read install_timeout_minutes (default 15, 0 = disabled). Negative values
+    // are treated as disabled.
+    // Lee install_timeout_minutes (default 15, 0 = desactivado). Valores
+    // negativos se tratan como desactivado.
+    final timeoutResp =
+        await settingsConsumer.getInt('install_timeout_minutes');
+    _timeoutMinutes = timeoutResp.resolve(
+      onSuccess: (v, _) => v < 0 ? 0 : v,
+      onFailure: (_, _) => 15,
     );
 
     final consumer = ref.read(installationConsumerInjectionProvider);
@@ -321,13 +338,42 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         (bytes) => stderrBuffer.write(String.fromCharCodes(bytes)),
       );
 
-      final exitCode = await process.exitCode;
+      // Wait for the installer, applying a timeout when configured (BUG-04).
+      // A hung installer would otherwise hold its worker forever.
+      // Espera al instalador aplicando un timeout si está configurado (BUG-04).
+      // Un instalador colgado, si no, ocuparía su worker para siempre.
+      int exitCode;
+      var timedOut = false;
+      if (_timeoutMinutes > 0) {
+        try {
+          exitCode = await process.exitCode
+              .timeout(Duration(minutes: _timeoutMinutes));
+        } on TimeoutException {
+          timedOut = true;
+          process.kill();
+          exitCode = -1;
+        }
+      } else {
+        exitCode = await process.exitCode;
+      }
       _activeProcesses.remove(item.id);
 
       if (_disposed) return;
 
       // If killed intentionally (cancel/pause), DB already updated — skip.
       if (_killedItems.remove(item.id)) return;
+
+      // Timed out: the process was killed above; report it as failed.
+      // Timeout agotado: el proceso fue terminado arriba; se reporta como fallido.
+      if (timedOut) {
+        _sessionSnapshot.add(item.copyWith(status: 'failed'));
+        await consumer.failInstallation(
+          item.id,
+          'Tiempo de espera agotado tras $_timeoutMinutes min. '
+          'El proceso del instalador fue terminado.',
+        );
+        return;
+      }
 
       if (exitCode == 0) {
         // Record BEFORE delete: completeInstallation removes from queue.
