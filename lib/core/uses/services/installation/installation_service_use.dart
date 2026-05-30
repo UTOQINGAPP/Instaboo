@@ -493,6 +493,16 @@ class InstallationServiceUse implements InstallationServiceRule {
   }
 
   @override
+  Future<ResponseRule<Unit>> clearQueue() async {
+    try {
+      await _database.delete(_database.installationQueueTable).go();
+      return const SuccessResponseRule(data: unit);
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  @override
   Future<ResponseRule<QueueItemDataRule>> queueSoftware(
     int softwareId, {
     int? packId,

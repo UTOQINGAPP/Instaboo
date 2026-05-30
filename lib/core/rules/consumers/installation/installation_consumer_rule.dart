@@ -35,6 +35,12 @@ class InstallationConsumerRule {
   Future<ResponseRule<Unit>> enqueuePending() {
     return _service.enqueuePending();
   }
+
+  /// Removes every row from the installation queue (history is untouched).
+  /// Elimina todas las filas de la cola de instalación (el historial no se toca).
+  Future<ResponseRule<Unit>> clearQueue() {
+    return _service.clearQueue();
+  }
   
   /// Returns the queue of installation items.
   /// Devuelve la cola de items de instalación.

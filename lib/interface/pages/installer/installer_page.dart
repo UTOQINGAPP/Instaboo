@@ -4,6 +4,7 @@ import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/app/router/pages/pages_router.dart';
 import 'package:instaboo/interface/layouts/library/components/components_library.dart';
+import 'package:instaboo/interface/pages/installing/logic/logic_installing_page.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 
 class InstallerPage extends ConsumerStatefulWidget {
@@ -46,6 +47,11 @@ class _InstallerPageState extends ConsumerState<InstallerPage> {
     }
 
     if (!mounted) return;
+    // Reset the installing notifier so it rebuilds and processes the current
+    // queue instead of reusing a previous finished session's state.
+    // Reinicia el notifier de instalación para que se reconstruya y procese la
+    // cola actual en vez de reusar el estado de una sesión anterior ya terminada.
+    ref.invalidate(installingPageLogicProvider);
     // Navigate to the installing screen; it will pick up the queued items.
     // Navega a la pantalla de instalación; ella tomará los items encolados.
     InstallingRoute().go(context);

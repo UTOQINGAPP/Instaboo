@@ -19,6 +19,12 @@ abstract class InstallationServiceRule {
   /// Moves pending → queued and assigns queue_position
   /// Mueve pending → queued y asigna queue_position
   Future<ResponseRule<Unit>> enqueuePending();
+
+  /// Removes every row from the installation queue. The history table is left
+  /// untouched. Used to keep the queue empty at app start and after a session.
+  /// Elimina todas las filas de la cola de instalación. El historial no se toca.
+  /// Se usa para mantener la cola vacía al iniciar la app y al terminar.
+  Future<ResponseRule<Unit>> clearQueue();
   
   /// Returns the queue of installation items.
   /// Devuelve la cola de items de instalación.

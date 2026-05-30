@@ -34,7 +34,7 @@ const _editableIntKeys = {'parallel_installs', 'install_timeout_minutes'};
 // Rango (min, max, step) del selector para cada setting entero editable.
 const _intRanges = <String, ({int min, int max, int step})>{
   'parallel_installs': (min: 1, max: 10, step: 1),
-  'install_timeout_minutes': (min: 0, max: 180, step: 5),
+  'install_timeout_minutes': (min: 0, max: 180, step: 1),
 };
 
 // Labels en español para cada setting.

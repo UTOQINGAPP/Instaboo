@@ -151,4 +151,18 @@ void main() {
       expect(queue.single.status, 'cancelled');
     });
   });
+
+  group('clearQueue', () {
+    test('removes every queue row regardless of status', () async {
+      await insertQueueItem('a', status: 'pending');
+      await insertQueueItem('b', status: 'queued', position: 1);
+      await insertQueueItem('c', status: 'cancelled');
+      await insertQueueItem('d', status: 'paused');
+
+      expectOk(await service.clearQueue());
+
+      final queue = expectOk(await service.getQueue());
+      expect(queue, isEmpty);
+    });
+  });
 }

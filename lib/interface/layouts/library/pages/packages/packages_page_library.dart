@@ -4,6 +4,7 @@ import 'package:instaboo/core/rules/data/data_rules.dart';
 import 'package:instaboo/interface/app/router/pages/pages_router.dart';
 import 'package:instaboo/interface/layouts/library/pages/packages/dialogs/dialogs_packages_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/packages/logic/logic_packages_library.dart';
+import 'package:instaboo/interface/pages/installing/logic/logic_installing_page.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 
 class PackagesPageLibrary extends ConsumerWidget {
@@ -150,6 +151,9 @@ class PackagesPageLibrary extends ConsumerWidget {
     final consumer = ref.read(installationConsumerInjectionProvider);
     await consumer.queuePack(pack.id);
     if (!context.mounted) return;
+    // Reset the installing notifier so it processes this queue, not a stale one.
+    // Reinicia el notifier de instalación para que procese esta cola, no una vieja.
+    ref.invalidate(installingPageLogicProvider);
     InstallingRoute().go(context);
   }
 

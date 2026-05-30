@@ -11,5 +11,18 @@ Future<void> main() async {
     effect: WindowEffect.acrylic,
     color: const Color(0xCC222222),
   );
-  runApp(const ProviderScope(child: AppInterface()));
+
+  // Start every launch with an empty installation queue. The queue is transient
+  // session data; the permanent record lives in the history table.
+  // Cada arranque empieza con la cola de instalación vacía. La cola es data de
+  // sesión transitoria; el registro permanente vive en la tabla de historial.
+  final container = ProviderContainer();
+  await container.read(installationConsumerInjectionProvider).clearQueue();
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const AppInterface(),
+    ),
+  );
 }

@@ -92,6 +92,21 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
 
   @override
   Future<InstallingPageState> build() async {
+    // build() can re-run on the SAME notifier instance (e.g. after
+    // ref.invalidate, since this provider is not autoDispose). Reset the
+    // per-session state so a previous finished session doesn't leave
+    // _disposed=true, stale counters, or an old snapshot behind.
+    // build() puede re-ejecutarse sobre la MISMA instancia del notifier (p. ej.
+    // tras ref.invalidate, al no ser autoDispose). Reinicia el estado de sesión
+    // para que una sesión anterior no deje _disposed=true, contadores viejos ni
+    // un snapshot previo.
+    _disposed = false;
+    _activeCount = 0;
+    _pollTimer?.cancel();
+    _activeProcesses.clear();
+    _killedItems.clear();
+    _sessionSnapshot.clear();
+
     ref.onDispose(() {
       _disposed = true;
       _pollTimer?.cancel();
@@ -187,6 +202,11 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         if (isDone) {
           _pollTimer?.cancel();
           _publishSessionSnapshot(items);
+          // Session finished: clear the transient queue (results live in the
+          // in-memory snapshot; history is untouched).
+          // Sesión terminada: limpia la cola transitoria (los resultados viven
+          // en el snapshot en memoria; el historial no se toca).
+          await ref.read(installationConsumerInjectionProvider).clearQueue();
         }
       }
     });
@@ -435,6 +455,11 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       state.value!.copyWith(items: items, isDone: true, isPaused: true),
     );
     _publishSessionSnapshot(items);
+    // Clear the transient queue after pausing too; the snapshot already holds
+    // what results needs.
+    // Limpia la cola transitoria también al pausar; el snapshot ya tiene lo
+    // que necesitan los resultados.
+    await consumer.clearQueue();
   }
 }
 
