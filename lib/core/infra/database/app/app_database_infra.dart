@@ -49,6 +49,19 @@ class AppDatabaseInfra extends _$AppDatabaseInfra {
     _instance = null;
   }
 
+  /// Test-only seam: replaces the singleton with one backed by [executor]
+  /// (e.g. `NativeDatabase.memory()`). The database stays inside core/infra —
+  /// production wiring is untouched, services keep reading [instance].
+  ///
+  /// Costura solo para pruebas: reemplaza el singleton por uno respaldado por
+  /// [executor] (p. ej. `NativeDatabase.memory()`). La BD permanece dentro de
+  /// core/infra; el cableado de producción no cambia y los services siguen
+  /// leyendo [instance].
+  static void overrideForTesting(QueryExecutor executor) {
+    _instance?.close();
+    _instance = AppDatabaseInfra._(executor);
+  }
+
   @override
   int get schemaVersion => 4;
 
