@@ -249,11 +249,14 @@ class _SessionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final color = _statusColor(item.status);
+    final error = item.errorMessage;
+    final hasError = error != null && error.isNotEmpty;
 
     return Card(
       color: Colors.white.withValues(alpha: 0.07),
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        isThreeLine: hasError,
         leading: Icon(_statusIcon(item.status), color: color, size: 28),
         title: Text(
           item.displayName,
@@ -262,6 +265,12 @@ class _SessionItem extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+        subtitle: hasError
+            ? Text(
+                error,
+                style: textTheme.bodySmall?.copyWith(color: Colors.white60),
+              )
+            : null,
         trailing: Text(
           _statusLabel(item.status),
           style: textTheme.bodySmall?.copyWith(

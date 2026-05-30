@@ -1,13 +1,18 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
+import 'package:ffi/ffi.dart';
+
 /// Collects Windows machine information once and caches the result.
-/// Uses [Platform] for instantly available data and [Process.run] for RAM
-/// (via wmic), which is the only call that requires an OS subprocess.
+/// Uses [Platform] for instantly available data and a direct Win32 FFI call
+/// (GlobalMemoryStatusEx) for total RAM — no external process, works on both
+/// Windows 10 and 11 (wmic is deprecated/removed on recent Win11).
 ///
 /// Recopila información del equipo Windows una vez y la cachea.
-/// Usa [Platform] para datos disponibles de inmediato y [Process.run]
-/// para la RAM (vía wmic), que es la única llamada que requiere subproceso.
+/// Usa [Platform] para datos inmediatos y una llamada FFI directa a Win32
+/// (GlobalMemoryStatusEx) para la RAM total — sin proceso externo; funciona en
+/// Windows 10 y 11 (wmic está deprecado/retirado en Win11 reciente).
 class MachineInfoCollectorInfra {
   MachineInfoCollectorInfra._();
 
@@ -35,25 +40,14 @@ class MachineInfoCollectorInfra {
     final osVersion = Platform.operatingSystemVersion;
     final processors = Platform.numberOfProcessors;
 
-    // Collect total RAM via wmic (returns KB, convert to MB).
-    // Recopila la RAM total vía wmic (devuelve KB, convierte a MB).
+    // Total physical RAM via a direct Win32 FFI call (bytes -> MB).
+    // RAM física total vía llamada FFI directa a Win32 (bytes -> MB).
     int? totalRamMb;
     try {
-      final result = await Process.run(
-        'wmic',
-        ['OS', 'get', 'TotalVisibleMemorySize', '/format:value'],
-        runInShell: true,
-      );
-      final output = (result.stdout as String).trim();
-      // Output format: "TotalVisibleMemorySize=16252928"
-      final match = RegExp(r'TotalVisibleMemorySize=(\d+)').firstMatch(output);
-      if (match != null) {
-        final kb = int.tryParse(match.group(1)!);
-        if (kb != null) totalRamMb = (kb / 1024).round();
-      }
+      totalRamMb = _readTotalPhysicalMemoryMb();
     } catch (_) {
-      // wmic unavailable — leave RAM as null.
-      // wmic no disponible — RAM queda como null.
+      // FFI unavailable — leave RAM as null.
+      // FFI no disponible — RAM queda como null.
     }
 
     _cache = {
@@ -85,4 +79,54 @@ class MachineInfoCollectorInfra {
   /// Clears the cache (useful between test sessions).
   /// Limpia el caché (útil entre sesiones de prueba).
   void reset() => _cache = null;
+}
+
+// ─── Win32 FFI: total physical memory ───────────────────────────────────────
+
+/// MEMORYSTATUSEX (kernel32). 64 bytes; [dwLength] must be set before the call.
+/// MEMORYSTATUSEX (kernel32). 64 bytes; [dwLength] debe fijarse antes de llamar.
+final class _MemoryStatusEx extends Struct {
+  @Uint32()
+  external int dwLength;
+  @Uint32()
+  external int dwMemoryLoad;
+  @Uint64()
+  external int ullTotalPhys;
+  @Uint64()
+  external int ullAvailPhys;
+  @Uint64()
+  external int ullTotalPageFile;
+  @Uint64()
+  external int ullAvailPageFile;
+  @Uint64()
+  external int ullTotalVirtual;
+  @Uint64()
+  external int ullAvailVirtual;
+  @Uint64()
+  external int ullAvailExtendedVirtual;
+}
+
+typedef _GlobalMemoryStatusExNative = Int32 Function(Pointer<_MemoryStatusEx>);
+typedef _GlobalMemoryStatusExDart = int Function(Pointer<_MemoryStatusEx>);
+
+/// Returns total physical memory in MB via GlobalMemoryStatusEx, or null when
+/// unavailable (non-Windows or a failed call).
+/// Devuelve la RAM física total en MB vía GlobalMemoryStatusEx, o null si no
+/// está disponible (no-Windows o llamada fallida).
+int? _readTotalPhysicalMemoryMb() {
+  if (!Platform.isWindows) return null;
+  final kernel32 = DynamicLibrary.open('kernel32.dll');
+  final globalMemoryStatusEx = kernel32.lookupFunction<
+      _GlobalMemoryStatusExNative, _GlobalMemoryStatusExDart>(
+    'GlobalMemoryStatusEx',
+  );
+  final buffer = calloc<_MemoryStatusEx>();
+  try {
+    buffer.ref.dwLength = sizeOf<_MemoryStatusEx>();
+    final ok = globalMemoryStatusEx(buffer);
+    if (ok == 0) return null;
+    return (buffer.ref.ullTotalPhys / (1024 * 1024)).round();
+  } finally {
+    calloc.free(buffer);
+  }
 }

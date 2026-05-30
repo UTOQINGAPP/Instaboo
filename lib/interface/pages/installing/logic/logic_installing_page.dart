@@ -281,11 +281,9 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     final consumer = ref.read(installationConsumerInjectionProvider);
 
     if (item.installerId == null || item.installerId!.isEmpty) {
-      _sessionSnapshot.add(item.copyWith(status: 'failed'));
-      await consumer.failInstallation(
-        item.id,
-        'No hay instalador asociado a este software.',
-      );
+      const msg = 'No hay instalador asociado a este software.';
+      _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
+      await consumer.failInstallation(item.id, msg);
       return;
     }
 
@@ -315,7 +313,8 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         onFailure: (msg, _) => msg,
       );
       if (integrityError != null) {
-        _sessionSnapshot.add(item.copyWith(status: 'failed'));
+        _sessionSnapshot
+            .add(item.copyWith(status: 'failed', errorMessage: integrityError));
         await consumer.failInstallation(item.id, integrityError);
         return;
       }
@@ -353,10 +352,16 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       );
       _activeProcesses[item.id] = process;
 
-      final stderrBuffer = StringBuffer();
-      process.stderr.listen(
-        (bytes) => stderrBuffer.write(String.fromCharCodes(bytes)),
-      );
+      // Drain BOTH streams (BUG-03) and decode them properly later (BUG-02).
+      // An undrained stdout pipe can fill its buffer and stall the process.
+      // Drena AMBOS flujos (BUG-03) y los decodifica correctamente luego (BUG-02).
+      // Un stdout sin drenar puede llenar su búfer y bloquear el proceso.
+      final stdoutFuture = process.stdout
+          .fold<List<int>>(<int>[], (acc, bytes) => acc..addAll(bytes))
+          .catchError((_) => <int>[]);
+      final stderrFuture = process.stderr
+          .fold<List<int>>(<int>[], (acc, bytes) => acc..addAll(bytes))
+          .catchError((_) => <int>[]);
 
       // Wait for the installer, applying a timeout when configured (BUG-04).
       // A hung installer would otherwise hold its worker forever.
@@ -386,12 +391,10 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       // Timed out: the process was killed above; report it as failed.
       // Timeout agotado: el proceso fue terminado arriba; se reporta como fallido.
       if (timedOut) {
-        _sessionSnapshot.add(item.copyWith(status: 'failed'));
-        await consumer.failInstallation(
-          item.id,
-          'Tiempo de espera agotado tras $_timeoutMinutes min. '
-          'El proceso del instalador fue terminado.',
-        );
+        final msg = 'Tiempo de espera agotado tras $_timeoutMinutes min. '
+            'El proceso del instalador fue terminado.';
+        _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
+        await consumer.failInstallation(item.id, msg);
         return;
       }
 
@@ -400,20 +403,44 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         _sessionSnapshot.add(item.copyWith(status: 'completed'));
         await consumer.completeInstallation(item.id);
       } else {
-        final stderr = stderrBuffer.toString();
-        final detail = stderr.isNotEmpty
-            ? 'Código de salida: $exitCode\n$stderr'
-            : 'Código de salida: $exitCode';
+        // Decode with the system encoding (BUG-02); include stdout when stderr
+        // is empty so the failure detail is still useful.
+        // Decodifica con la codificación del sistema (BUG-02); incluye stdout si
+        // stderr está vacío para que el detalle del fallo siga siendo útil.
+        final err = _decodeProcessOutput(await stderrFuture);
+        final out = _decodeProcessOutput(await stdoutFuture);
+        final parts = <String>['Código de salida: $exitCode'];
+        if (err.isNotEmpty) {
+          parts.add(err);
+        } else if (out.isNotEmpty) {
+          parts.add(out);
+        }
+        final detail = parts.join('\n');
         // Record BEFORE delete: failInstallation removes from queue.
-        _sessionSnapshot.add(item.copyWith(status: 'failed'));
+        _sessionSnapshot
+            .add(item.copyWith(status: 'failed', errorMessage: detail));
         await consumer.failInstallation(item.id, detail);
       }
     } catch (e) {
       _activeProcesses.remove(item.id);
       if (_disposed) return;
       if (_killedItems.remove(item.id)) return;
-      _sessionSnapshot.add(item.copyWith(status: 'failed'));
-      await consumer.failInstallation(item.id, e.toString());
+      final msg = e.toString();
+      _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
+      await consumer.failInstallation(item.id, msg);
+    }
+  }
+
+  /// Decodes installer output bytes with the OS encoding, falling back to raw
+  /// code units if decoding fails (BUG-02). Avoids mangling accented messages.
+  /// Decodifica bytes de salida con la codificación del SO; si falla, usa los
+  /// code units crudos (BUG-02). Evita corromper mensajes con acentos.
+  String _decodeProcessOutput(List<int> bytes) {
+    if (bytes.isEmpty) return '';
+    try {
+      return systemEncoding.decode(bytes).trim();
+    } catch (_) {
+      return String.fromCharCodes(bytes).trim();
     }
   }
 
