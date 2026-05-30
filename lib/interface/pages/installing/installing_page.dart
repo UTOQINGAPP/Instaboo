@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/core/rules/data/data_rules.dart';
@@ -206,13 +208,66 @@ class InstallingPage extends ConsumerWidget {
 
 // ─── Queue item card ──────────────────────────────────────────────────────────
 
-class _QueueItemCard extends StatelessWidget {
+class _QueueItemCard extends StatefulWidget {
   final QueueItemDataRule item;
   final VoidCallback? onCancel;
 
   const _QueueItemCard({required this.item, this.onCancel});
 
-  Color _statusColor() => switch (item.status) {
+  @override
+  State<_QueueItemCard> createState() => _QueueItemCardState();
+}
+
+class _QueueItemCardState extends State<_QueueItemCard> {
+  Timer? _ticker;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateElapsed();
+    if (widget.item.status == 'installing') _startTicker();
+  }
+
+  @override
+  void didUpdateWidget(_QueueItemCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.item.status == 'installing' &&
+        oldWidget.item.status != 'installing') {
+      _updateElapsed();
+      _startTicker();
+    } else if (widget.item.status != 'installing') {
+      _ticker?.cancel();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  void _startTicker() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(_updateElapsed);
+    });
+  }
+
+  void _updateElapsed() {
+    final started = widget.item.startedAt;
+    _elapsed = started != null
+        ? DateTime.now().difference(started)
+        : Duration.zero;
+  }
+
+  String _formatElapsed(Duration d) {
+    final m = d.inMinutes.toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  Color _statusColor() => switch (widget.item.status) {
         'installing' => Colors.blueAccent,
         'cancelled' => Colors.orangeAccent,
         'paused' => Colors.white38,
@@ -220,7 +275,7 @@ class _QueueItemCard extends StatelessWidget {
         _ => Colors.white38, // pending
       };
 
-  IconData _statusIcon() => switch (item.status) {
+  IconData _statusIcon() => switch (widget.item.status) {
         'installing' => Icons.downloading,
         'cancelled' => Icons.cancel_outlined,
         'paused' => Icons.pause_circle_outline,
@@ -228,7 +283,7 @@ class _QueueItemCard extends StatelessWidget {
         _ => Icons.schedule, // pending
       };
 
-  String _statusLabel() => switch (item.status) {
+  String _statusLabel() => switch (widget.item.status) {
         'installing' => 'Instalando',
         'cancelled' => 'Cancelado',
         'paused' => 'Pausado',
@@ -240,7 +295,7 @@ class _QueueItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final color = _statusColor();
-    final isInstalling = item.status == 'installing';
+    final isInstalling = widget.item.status == 'installing';
 
     return Card(
       color: Colors.white.withValues(alpha: 0.07),
@@ -256,13 +311,13 @@ class _QueueItemCard extends StatelessWidget {
                 Icon(_statusIcon(), color: color, size: 26),
                 const SizedBox(width: 12),
 
-                // Name + position
+                // Name + status + elapsed
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.displayName,
+                        widget.item.displayName,
                         style: textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -272,12 +327,20 @@ class _QueueItemCard extends StatelessWidget {
                         children: [
                           Text(
                             _statusLabel(),
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: color),
+                            style: textTheme.bodySmall?.copyWith(color: color),
                           ),
-                          if (item.queuePosition != null) ...[
+                          // Elapsed timer shown while installing (UX-05)
+                          if (isInstalling && _elapsed > Duration.zero) ...[
                             Text(
-                              '  •  Posición ${item.queuePosition}',
+                              '  •  ${_formatElapsed(_elapsed)}',
+                              style: textTheme.bodySmall
+                                  ?.copyWith(color: Colors.white54),
+                            ),
+                          ],
+                          if (widget.item.queuePosition != null &&
+                              !isInstalling) ...[
+                            Text(
+                              '  •  Posición ${widget.item.queuePosition}',
                               style: textTheme.bodySmall
                                   ?.copyWith(color: Colors.white38),
                             ),
@@ -299,13 +362,15 @@ class _QueueItemCard extends StatelessWidget {
               ],
             ),
 
-            // Progress bar shown only while installing
+            // Indeterminate progress bar while installing (UX-05)
             if (isInstalling) ...[
               const SizedBox(height: 10),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: item.progress > 0 ? item.progress / 100 : null,
+                  value: widget.item.progress > 0
+                      ? widget.item.progress / 100
+                      : null, // null = indeterminate
                   minHeight: 5,
                   backgroundColor: Colors.white12,
                   valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -314,13 +379,13 @@ class _QueueItemCard extends StatelessWidget {
             ],
 
             // Error details when cancelled / failed
-            if (item.errorMessage != null &&
-                item.errorMessage!.isNotEmpty) ...[
+            if (widget.item.errorMessage != null &&
+                widget.item.errorMessage!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                item.errorMessage!,
-                style: textTheme.bodySmall
-                    ?.copyWith(color: Colors.redAccent.withValues(alpha: 0.9)),
+                widget.item.errorMessage!,
+                style: textTheme.bodySmall?.copyWith(
+                    color: Colors.redAccent.withValues(alpha: 0.9)),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -330,4 +395,6 @@ class _QueueItemCard extends StatelessWidget {
       ),
     );
   }
+
+  VoidCallback? get onCancel => widget.onCancel;
 }

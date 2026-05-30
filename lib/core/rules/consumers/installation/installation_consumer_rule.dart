@@ -47,7 +47,13 @@ class InstallationConsumerRule {
   Future<ResponseRule<List<QueueItemDataRule>>> getQueue({String? status}) {
     return _service.getQueue(status: status);
   }
-  
+
+  /// Returns a live stream of the installation queue (Drift watch).
+  /// Devuelve un stream en vivo de la cola de instalación (Drift watch).
+  Stream<List<QueueItemDataRule>> watchQueue() {
+    return _service.watchQueue();
+  }
+
   /// Cancels an installation item.
   /// Cancela un item de instalación.
   Future<ResponseRule<Unit>> cancelQueueItem(int queueItemId) {

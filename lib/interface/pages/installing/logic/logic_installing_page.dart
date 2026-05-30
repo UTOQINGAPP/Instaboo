@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
+import 'package:local_notifier/local_notifier.dart';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -54,11 +55,19 @@ final class InstallingPageState {
 /// Notifier que maneja el flujo de instalación en tiempo real con soporte
 /// de instalaciones en paralelo.
 class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
-  Timer? _pollTimer;
+  StreamSubscription<List<QueueItemDataRule>>? _queueSub;
 
   /// Number of workers currently running.
   /// Número de workers en ejecución actualmente.
   int _activeCount = 0;
+
+  /// Running totals tracked directly in _runInstaller (used for the
+  /// end-of-batch notification). More reliable than reading _sessionSnapshot
+  /// at stream-emit time due to async interleaving.
+  /// Conteos actualizados directamente en _runInstaller para la notificación
+  /// de fin de lote. Más fiable que leer _sessionSnapshot en el evento del stream.
+  int _completedCount = 0;
+  int _failedCount = 0;
 
   /// Maximum simultaneous installations (from `parallel_installs` setting).
   /// Máximo de instalaciones simultáneas (de la configuración `parallel_installs`).
@@ -102,14 +111,16 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     // un snapshot previo.
     _disposed = false;
     _activeCount = 0;
-    _pollTimer?.cancel();
+    _completedCount = 0;
+    _failedCount = 0;
+    _queueSub?.cancel();
     _activeProcesses.clear();
     _killedItems.clear();
     _sessionSnapshot.clear();
 
     ref.onDispose(() {
       _disposed = true;
-      _pollTimer?.cancel();
+      _queueSub?.cancel();
       for (final process in _activeProcesses.values) {
         process.kill();
       }
@@ -144,8 +155,8 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     // 2. Load initial queue snapshot.
     final items = await _fetchQueue();
 
-    // 3. Start UI polling.
-    _startPolling();
+    // 3. Start reactive queue watch (replaces 2-second polling — UX-04).
+    _startWatching();
 
     // 4. Launch up to _maxParallel workers concurrently (intentionally unawaited).
     //    Each _processNext() call reserves a slot, marks one item 'installing',
@@ -189,10 +200,13 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     return items.every((i) => terminalStatuses.contains(i.status));
   }
 
-  void _startPolling() {
-    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
-      if (_disposed) return;
-      final items = await _fetchQueue();
+  /// Subscribes to the Drift queue stream (UX-04). Replaces the 2-second
+  /// polling timer with reactive updates pushed by the database layer.
+  /// Se suscribe al stream de Drift (UX-04). Reemplaza el polling de 2s por
+  /// actualizaciones reactivas empujadas por la capa de base de datos.
+  void _startWatching() {
+    final consumer = ref.read(installationConsumerInjectionProvider);
+    _queueSub = consumer.watchQueue().listen((items) async {
       if (_disposed) return;
       final isDone = _computeIsDone(items);
       if (state.hasValue) {
@@ -200,16 +214,53 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
           state.value!.copyWith(items: items, isDone: isDone),
         );
         if (isDone) {
-          _pollTimer?.cancel();
+          _queueSub?.cancel();
           _publishSessionSnapshot(items);
-          // Session finished: clear the transient queue (results live in the
-          // in-memory snapshot; history is untouched).
-          // Sesión terminada: limpia la cola transitoria (los resultados viven
-          // en el snapshot en memoria; el historial no se toca).
+          // Use the session snapshot for the notification: live queue items
+          // are deleted on complete/fail, so `items` may be empty by now.
+          // Usamos el snapshot de sesión para la notificación: los items se
+          // eliminan de la cola al completar/fallar, así que `items` puede
+          // estar vacío en este punto.
+          await _sendBatchNotification();
+          // Sesión terminada: limpia la cola transitoria.
           await ref.read(installationConsumerInjectionProvider).clearQueue();
         }
       }
     });
+  }
+
+  /// Sends a Windows Toast notification when the batch finishes (UX-03 / NF-12).
+  /// Uses [_completedCount] / [_failedCount] tracked directly in _runInstaller
+  /// so the counts are always accurate regardless of stream timing.
+  /// Respects the `notifications_enabled` setting — does nothing if disabled.
+  Future<void> _sendBatchNotification() async {
+    try {
+      final settingsConsumer = ref.read(settingsConsumerInjectionProvider);
+      final enabledResp =
+          await settingsConsumer.getBool('notifications_enabled');
+      final enabled = enabledResp.resolve(
+        onSuccess: (v, _) => v,
+        onFailure: (_, _) => true,
+      );
+      if (!enabled) return;
+
+      final total = _completedCount + _failedCount;
+      final String title;
+      final String body;
+      if (_failedCount == 0) {
+        title = 'Instaboo — Instalación completada';
+        body = '$_completedCount de $total programas instalados correctamente.';
+      } else {
+        title = 'Instaboo — Instalación finalizada con errores';
+        body = '$_completedCount correctas, $_failedCount con error '
+            '(total: $total).';
+      }
+
+      await localNotifier.notify(LocalNotification(title: title, body: body));
+    } catch (_) {
+      // Notification errors must never interrupt the installation flow.
+      // Los errores de notificación no deben interrumpir el flujo.
+    }
   }
 
   /// Attempts to start one more installer worker if below the concurrency limit.
@@ -282,6 +333,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
 
     if (item.installerId == null || item.installerId!.isEmpty) {
       const msg = 'No hay instalador asociado a este software.';
+      _failedCount++;
       _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
       await consumer.failInstallation(item.id, msg);
       return;
@@ -393,20 +445,17 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       if (timedOut) {
         final msg = 'Tiempo de espera agotado tras $_timeoutMinutes min. '
             'El proceso del instalador fue terminado.';
+        _failedCount++;
         _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
         await consumer.failInstallation(item.id, msg);
         return;
       }
 
       if (exitCode == 0) {
-        // Record BEFORE delete: completeInstallation removes from queue.
+        _completedCount++;
         _sessionSnapshot.add(item.copyWith(status: 'completed'));
         await consumer.completeInstallation(item.id);
       } else {
-        // Decode with the system encoding (BUG-02); include stdout when stderr
-        // is empty so the failure detail is still useful.
-        // Decodifica con la codificación del sistema (BUG-02); incluye stdout si
-        // stderr está vacío para que el detalle del fallo siga siendo útil.
         final err = _decodeProcessOutput(await stderrFuture);
         final out = _decodeProcessOutput(await stdoutFuture);
         final parts = <String>['Código de salida: $exitCode'];
@@ -416,7 +465,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
           parts.add(out);
         }
         final detail = parts.join('\n');
-        // Record BEFORE delete: failInstallation removes from queue.
+        _failedCount++;
         _sessionSnapshot
             .add(item.copyWith(status: 'failed', errorMessage: detail));
         await consumer.failInstallation(item.id, detail);
@@ -426,6 +475,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       if (_disposed) return;
       if (_killedItems.remove(item.id)) return;
       final msg = e.toString();
+      _failedCount++;
       _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
       await consumer.failInstallation(item.id, msg);
     }
@@ -477,7 +527,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     if (_disposed) return;
     final items = await _fetchQueue();
     if (_disposed || !state.hasValue) return;
-    _pollTimer?.cancel();
+    _queueSub?.cancel();
     state = AsyncData(
       state.value!.copyWith(items: items, isDone: true, isPaused: true),
     );

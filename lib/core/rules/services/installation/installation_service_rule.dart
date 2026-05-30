@@ -29,6 +29,10 @@ abstract class InstallationServiceRule {
   /// Returns the queue of installation items.
   /// Devuelve la cola de items de instalación.
   Future<ResponseRule<List<QueueItemDataRule>>> getQueue({String? status});
+
+  /// Returns a live stream of the installation queue (Drift watch).
+  /// Devuelve un stream en vivo de la cola de instalación (Drift watch).
+  Stream<List<QueueItemDataRule>> watchQueue();
   
   /// Cancels an installation item.
   /// Cancela un item de instalación.

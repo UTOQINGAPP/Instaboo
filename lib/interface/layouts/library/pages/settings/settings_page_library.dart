@@ -261,11 +261,60 @@ class SettingsPageLibrary extends ConsumerWidget {
                                 onDelete: fw.isBuiltIn
                                     ? null
                                     : () async {
-                                        final consumer = ref.read(
-                                          installerFrameworksConsumerInjectionProvider,
+                                        final bool? confirmed =
+                                            await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text(
+                                                'Eliminar framework'),
+                                            content: Text(
+                                              '¿Eliminar "${fw.name}"? '
+                                              'Los instaladores que lo usen '
+                                              'quedarán sin framework asignado.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx)
+                                                        .pop(false),
+                                                child:
+                                                    const Text('Cancelar'),
+                                              ),
+                                              FilledButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx)
+                                                        .pop(true),
+                                                child:
+                                                    const Text('Eliminar'),
+                                              ),
+                                            ],
+                                          ),
                                         );
-                                        await consumer.delete(fw.id);
-                                        ref.invalidate(_frameworksProvider);
+                                        if (confirmed == true) {
+                                          final consumer = ref.read(
+                                            installerFrameworksConsumerInjectionProvider,
+                                          );
+                                          final resp =
+                                              await consumer.delete(fw.id);
+                                          resp.resolve(
+                                            onSuccess: (_, _) => ref
+                                                .invalidate(
+                                                    _frameworksProvider),
+                                            onFailure: (msg, _) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        'Error al eliminar: $msg'),
+                                                    backgroundColor:
+                                                        Colors.redAccent,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          );
+                                        }
                                       },
                               ),
                             )

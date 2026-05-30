@@ -361,6 +361,16 @@ class InstallationServiceUse implements InstallationServiceRule {
   }
 
   @override
+  Stream<List<QueueItemDataRule>> watchQueue() {
+    final q = _database.select(_database.installationQueueTable)
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.queuePosition),
+        (t) => OrderingTerm.asc(t.createdAt),
+      ]);
+    return q.watch().map((rows) => rows.map(_queueFromRow).toList());
+  }
+
+  @override
   Future<ResponseRule<InstallationStatsDataRule>> getStats() async {
     try {
       final queueRows = await _database.select(_database.installationQueueTable).get();

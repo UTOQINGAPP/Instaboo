@@ -3,10 +3,12 @@ import 'package:flutter_acrylic/window.dart';
 import 'package:flutter_acrylic/window_effect.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/interface/interface.dart';
+import 'package:local_notifier/local_notifier.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Window.initialize();
+  await localNotifier.setup(appName: 'Instaboo');
   await Window.setEffect(
     effect: WindowEffect.acrylic,
     color: const Color(0xCC222222),

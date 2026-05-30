@@ -54,6 +54,22 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final logic = ref.watch(logicHomeLibraryProvider);
+
+    // Show error snackbar when deleteSoftware fails (UX-06).
+    ref.listen<AsyncValue<HomeLibraryState>>(logicHomeLibraryProvider,
+        (_, next) {
+      final msg = next.value?.errorMessage;
+      if (msg != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
+
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -200,15 +216,23 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                             builder: (BuildContext ctx) => AlertDialog(
                               title: const Text('Eliminar software'),
                               content: Text(
-                                '¿Estás seguro de que deseas eliminar "${software.name}"? Esta acción no se puede deshacer.',
+                                '¿Eliminar "${software.name}"?\n\n'
+                                'Se eliminarán también los archivos del '
+                                'instalador en disco. '
+                                'Esta acción no se puede deshacer.',
                               ),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  onPressed: () =>
+                                      Navigator.of(ctx).pop(false),
                                   child: const Text('Cancelar'),
                                 ),
                                 FilledButton(
-                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                  onPressed: () =>
+                                      Navigator.of(ctx).pop(true),
                                   child: const Text('Eliminar'),
                                 ),
                               ],
