@@ -53,6 +53,8 @@ class _AddSoftwareDialogLibraryState
   String _silentArgs = '';
   int? _selectedFrameworkId;
   String _extraSilentArgs = '';
+  /// Cached silentArgs of the currently selected framework (NF-02).
+  String _frameworkSilentArgs = '';
   String? _detectedFrameworkName;
   int? _selectedCategoryId;
   bool _isActive = true;
@@ -89,9 +91,11 @@ class _AddSoftwareDialogLibraryState
       _requiresInternet = s.requiresInternet;
       _selectedFrameworkId = s.installerFrameworkId;
       _extraSilentArgs = s.extraSilentArgs ?? '';
-      // Load existing dependencies after first frame.
-      // Carga las dependencias existentes después del primer frame.
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadDependencies());
+      // Load existing dependencies and framework args after first frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadDependencies();
+        _loadFrameworkArgs();
+      });
     }
   }
 
@@ -399,6 +403,20 @@ class _AddSoftwareDialogLibraryState
     );
   }
 
+  /// Populates [_frameworkSilentArgs] from the already-selected framework
+  /// (used in edit mode to restore the preview on first build).
+  void _loadFrameworkArgs() {
+    if (_selectedFrameworkId == null) return;
+    final frameworksAsync = ref.read(_dialogFrameworksProvider);
+    frameworksAsync.whenData((frameworks) {
+      final match =
+          frameworks.where((f) => f.id == _selectedFrameworkId).firstOrNull;
+      if (match != null && mounted) {
+        setState(() => _frameworkSilentArgs = match.silentArgs);
+      }
+    });
+  }
+
   Future<void> _pickInstallerFile() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -427,6 +445,7 @@ class _AddSoftwareDialogLibraryState
           setState(() {
             _selectedFrameworkId = match.id;
             _detectedFrameworkName = match.name;
+            _frameworkSilentArgs = match.silentArgs;
           });
         }
       });
@@ -465,30 +484,65 @@ class _AddSoftwareDialogLibraryState
                   (f) => DropdownMenuItem<int?>(value: f.id, child: Text(f.name)),
                 ),
               ],
-              onChanged: (value) => setState(() => _selectedFrameworkId = value),
+              onChanged: (value) {
+                final fw = frameworks
+                    .where((f) => f.id == value)
+                    .firstOrNull;
+                setState(() {
+                  _selectedFrameworkId = value;
+                  _frameworkSilentArgs = fw?.silentArgs ?? '';
+                });
+              },
             ),
 
+            // ── Auto-args banner (NF-02) ────────────────────────────────────
             if (selected != null && selected.silentArgs.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
+                  border: Border.all(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, size: 16,
+                    Icon(Icons.auto_fix_high,
+                        size: 16,
                         color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        'Args del framework: ${selected.silentArgs}',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontFamily: 'monospace',
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Args del framework aplicados automáticamente:',
+                            style: textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            selected.silentArgs,
+                            style: textTheme.bodySmall?.copyWith(
+                              fontFamily: 'monospace',
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -497,12 +551,53 @@ class _AddSoftwareDialogLibraryState
             ],
 
             const SizedBox(height: 16),
-            SilentArgsChipInputShared(
-              key: ValueKey(_selectedFrameworkId),
-              initialValue: _extraSilentArgs,
-              label: 'Argumentos adicionales (opcionales)',
-              hint: 'Ej: /LOG  y presiona Enter',
-              onChanged: (value) => _extraSilentArgs = value,
+            StatefulBuilder(
+              builder: (context, setInner) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SilentArgsChipInputShared(
+                    key: ValueKey(_selectedFrameworkId),
+                    initialValue: _extraSilentArgs,
+                    label: _frameworkSilentArgs.isNotEmpty
+                        ? 'Args adicionales (se añaden a los del framework)'
+                        : 'Argumentos silenciosos',
+                    hint: 'Ej: /LOG  y presiona Enter',
+                    onChanged: (value) {
+                      _extraSilentArgs = value;
+                      setInner(() {});
+                    },
+                  ),
+                  // Preview of final args (NF-02)
+                  if (_frameworkSilentArgs.isNotEmpty ||
+                      _extraSilentArgs.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.play_circle_outline,
+                            size: 14,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Vista previa: ${[
+                              _frameworkSilentArgs,
+                              _extraSilentArgs,
+                            ].where((s) => s.trim().isNotEmpty).join(' ')}',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontFamily: 'monospace',
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         );
