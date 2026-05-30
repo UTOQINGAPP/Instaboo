@@ -57,7 +57,13 @@ final InstallersServiceRule _service;
   Future<ResponseRule<Unit>> verify(String id) {
     return _service.verify(id);
   }
-  
+
+  /// Integrity pre-flight (SEC-02): success = safe to execute; failure = do not launch.
+  /// Pre-vuelo de integridad (SEC-02): éxito = seguro ejecutar; fallo = no lanzar.
+  Future<ResponseRule<Unit>> checkIntegrity(String id) {
+    return _service.checkIntegrity(id);
+  }
+
   /// Returns the main executable path.
   /// Devuelve la ruta completa reconstruida: /installers/{id}/{main_executable}
   Future<ResponseRule<InstallerDataRule>> getMainExecutablePath(String id) {

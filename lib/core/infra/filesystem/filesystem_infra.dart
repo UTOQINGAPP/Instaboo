@@ -49,6 +49,15 @@ class FilesystemInfra {
     );
   }
 
+  /// Test-only seam: clears the singleton so a following [initialize] can point
+  /// the paths at a temporary directory. Stays inside core/infra.
+  ///
+  /// Costura solo para pruebas: limpia el singleton para que un [initialize]
+  /// posterior apunte las rutas a un directorio temporal. Permanece en core/infra.
+  static void resetForTesting() {
+    _instance = null;
+  }
+
   /// Base path for installers.
   /// Ruta base para instaladores.
   final String _installersBasePath;

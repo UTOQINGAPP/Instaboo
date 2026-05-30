@@ -35,7 +35,18 @@ abstract class InstallersServiceRule {
   /// Verifies the existence of files on disk and updates is_verified.
   /// Verifica la existencia de archivos en disco y actualiza is_verified.
   Future<ResponseRule<Unit>> verify(String id);
-  
+
+  /// Integrity pre-flight (SEC-02): recomputes the main executable SHA-256 and
+  /// compares it to the stored baseline. Success means it is safe to execute
+  /// (matching hash, or trust-on-first-use when no baseline exists yet);
+  /// failure means the binary must NOT be launched.
+  ///
+  /// Pre-vuelo de integridad (SEC-02): recalcula el SHA-256 del ejecutable
+  /// principal y lo compara con la línea base. Éxito = seguro ejecutar (hash
+  /// coincide, o confianza en el primer uso si no hay línea base); fallo = el
+  /// binario NO debe lanzarse.
+  Future<ResponseRule<Unit>> checkIntegrity(String id);
+
   /// Returns the main executable path.
   /// Devuelve la ruta completa reconstruida: /installers/{id}/{main_executable}
   Future<ResponseRule<InstallerDataRule>> getMainExecutablePath(String id);

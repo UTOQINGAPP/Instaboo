@@ -193,6 +193,27 @@ class InstallersServiceUse implements InstallersServiceRule {
       }
       final exeOk =
           await _filesystem.installerExecutableExists(id, row.mainExecutable);
+
+      // Integrity check (SEC-02): compare the on-disk SHA-256 against the
+      // stored baseline. If there is no baseline yet (e.g. legacy rows),
+      // adopt the current hash (trust-on-first-use).
+      // Verificación de integridad (SEC-02): compara el SHA-256 en disco con
+      // la línea base almacenada. Si aún no hay línea base, adopta el hash
+      // actual (confianza en el primer uso).
+      bool verified = false;
+      String? hashToPersist;
+      if (exeOk) {
+        final computed =
+            await _filesystem.calculateExecutableHash(id, row.mainExecutable);
+        final stored = row.fileHashSha256;
+        if (stored == null || stored.isEmpty) {
+          verified = true;
+          hashToPersist = computed;
+        } else {
+          verified = stored == computed;
+        }
+      }
+
       int? fileCount;
       int? totalSizeBytes;
       if (await _filesystem.installerFolderExists(id)) {
@@ -206,8 +227,10 @@ class InstallersServiceUse implements InstallersServiceRule {
             ..where((t) => t.id.equals(id)))
           .write(
         InstallersTableCompanion(
-          isVerified: Value(exeOk),
+          isVerified: Value(verified),
           lastVerifiedAt: Value(DateTime.now()),
+          fileHashSha256:
+              hashToPersist != null ? Value(hashToPersist) : const Value.absent(),
           fileCount: fileCount != null ? Value(fileCount) : const Value.absent(),
           totalSizeBytes: totalSizeBytes != null
               ? Value(totalSizeBytes)
@@ -216,6 +239,81 @@ class InstallersServiceUse implements InstallersServiceRule {
         ),
       );
       return const SuccessResponseRule(data: unit);
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  @override
+  Future<ResponseRule<Unit>> checkIntegrity(String id) async {
+    try {
+      final row = await (_database.select(_database.installersTable)
+            ..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+      if (row == null) {
+        return const FailureResponseRule(message: 'Instalador no encontrado.');
+      }
+
+      final exeOk =
+          await _filesystem.installerExecutableExists(id, row.mainExecutable);
+      if (!exeOk) {
+        return const FailureResponseRule(
+          message:
+              'No se encontró el ejecutable del instalador en disco. Instalación abortada.',
+        );
+      }
+
+      final computed =
+          await _filesystem.calculateExecutableHash(id, row.mainExecutable);
+      final stored = row.fileHashSha256;
+      final now = DateTime.now();
+
+      // Trust-on-first-use: no stored baseline yet → adopt the current hash
+      // and allow this run; future runs are protected.
+      // Confianza en el primer uso: sin línea base → adopta el hash actual y
+      // permite esta ejecución; las futuras quedan protegidas.
+      if (stored == null || stored.isEmpty) {
+        await (_database.update(_database.installersTable)
+              ..where((t) => t.id.equals(id)))
+            .write(
+          InstallersTableCompanion(
+            fileHashSha256: Value(computed),
+            isVerified: const Value(true),
+            lastVerifiedAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+        return const SuccessResponseRule(data: unit);
+      }
+
+      if (stored == computed) {
+        await (_database.update(_database.installersTable)
+              ..where((t) => t.id.equals(id)))
+            .write(
+          InstallersTableCompanion(
+            isVerified: const Value(true),
+            lastVerifiedAt: Value(now),
+            updatedAt: Value(now),
+          ),
+        );
+        return const SuccessResponseRule(data: unit);
+      }
+
+      // Hash mismatch → refuse to execute.
+      // El hash no coincide → rechazar la ejecución.
+      await (_database.update(_database.installersTable)
+            ..where((t) => t.id.equals(id)))
+          .write(
+        InstallersTableCompanion(
+          isVerified: const Value(false),
+          lastVerifiedAt: Value(now),
+          updatedAt: Value(now),
+        ),
+      );
+      return const FailureResponseRule(
+        message:
+            'Verificación de integridad fallida: el ejecutable no coincide con el hash registrado. Instalación abortada por seguridad.',
+      );
     } catch (e) {
       return FailureResponseRule(message: e.toString());
     }

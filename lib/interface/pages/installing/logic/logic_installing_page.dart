@@ -266,6 +266,23 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         installer.mainExecutable,
       );
 
+      // Integrity pre-flight (SEC-02): never launch a binary whose on-disk
+      // hash doesn't match its stored baseline.
+      // Pre-vuelo de integridad (SEC-02): nunca lanzar un binario cuyo hash en
+      // disco no coincida con su línea base.
+      final integrityResp =
+          await installersConsumer.checkIntegrity(installer.id);
+      if (_disposed) return;
+      final integrityError = integrityResp.resolve(
+        onSuccess: (_, _) => null,
+        onFailure: (msg, _) => msg,
+      );
+      if (integrityError != null) {
+        _sessionSnapshot.add(item.copyWith(status: 'failed'));
+        await consumer.failInstallation(item.id, integrityError);
+        return;
+      }
+
       List<String> args;
       if (item.softwareId != null) {
         final softwareConsumer = ref.read(softwareConsumerInjectionProvider);
