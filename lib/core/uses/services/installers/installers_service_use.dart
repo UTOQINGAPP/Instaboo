@@ -388,4 +388,99 @@ class InstallersServiceUse implements InstallersServiceRule {
       return FailureResponseRule(message: e.toString());
     }
   }
+
+  // ── Business rules ──────────────────────────────────────────────────────────
+
+  @override
+  Future<ResponseRule<String?>> resolveEffectiveSilentArgs({
+    int? frameworkId,
+    String? extraSilentArgs,
+    String? explicitSilentArgs,
+  }) async {
+    try {
+      // 1. Explicit arg — highest priority
+      final explicit = explicitSilentArgs?.trim();
+      if (explicit != null && explicit.isNotEmpty) {
+        return SuccessResponseRule(data: explicit);
+      }
+
+      // 2. Framework args + extraSilentArgs
+      if (frameworkId != null) {
+        final fwRow = await (_database.select(_database.installerFrameworksTable)
+              ..where((t) => t.id.equals(frameworkId)))
+            .getSingleOrNull();
+        if (fwRow != null) {
+          final fwArgs  = fwRow.silentArgs.trim();
+          final extra   = extraSilentArgs?.trim() ?? '';
+          final combined = [fwArgs, extra].where((s) => s.isNotEmpty).join(' ');
+          if (combined.isNotEmpty) return SuccessResponseRule(data: combined);
+        }
+      }
+
+      // 3. Global default_silent_args setting — lowest priority
+      final settingRow = await (_database.select(_database.settingsTable)
+            ..where((t) => t.prefKey.equals('default_silent_args')))
+          .getSingleOrNull();
+      final globalArgs = settingRow?.prefValue?.trim();
+      if (globalArgs != null && globalArgs.isNotEmpty) {
+        return SuccessResponseRule(data: globalArgs);
+      }
+
+      return const SuccessResponseRule(data: null);
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  @override
+  Future<ResponseRule<List<String>>> buildProcessArgs(
+    String installerId,
+    bool isAutoInstallable,
+  ) async {
+    if (!isAutoInstallable) {
+      return const SuccessResponseRule(data: []);
+    }
+    try {
+      final row = await (_database.select(_database.installersTable)
+            ..where((t) => t.id.equals(installerId)))
+          .getSingleOrNull();
+      if (row == null) {
+        return const FailureResponseRule(message: 'Installer not found.');
+      }
+      final args = row.silentArgs
+              ?.split(' ')
+              .where((s) => s.isNotEmpty)
+              .toList() ??
+          <String>[];
+      return SuccessResponseRule(data: args);
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  // ── Filesystem paths ────────────────────────────────────────────────────────
+
+  @override
+  String getExecutablePath(String installerId, String mainExecutable) =>
+      _filesystem.getInstallerExecutablePath(installerId, mainExecutable);
+
+  // ── Authenticode ────────────────────────────────────────────────────────────
+
+  @override
+  Future<ResponseRule<AuthenticodeCheckDataRule>> checkAuthenticode(
+    String exePath,
+  ) async {
+    try {
+      final raw = await AuthenticodeInfra.check(exePath);
+      final origin = AuthenticodeOriginUse(
+        statusRaw: raw.status.name,
+        publisher: raw.publisher,
+      );
+      return SuccessResponseRule(
+        data: AuthenticodeAdapterUse.toDataRule(origin),
+      );
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
 }

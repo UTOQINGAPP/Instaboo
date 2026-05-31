@@ -7,3 +7,5 @@ export 'installation/installation_origins_uses.dart';
 export 'logs/log_origin_use.dart';
 export 'settings/setting_origin_use.dart';
 export 'software/software_origin_use.dart';
+export 'registry/registry_origin_use.dart';
+export 'authenticode/authenticode_origin_use.dart';

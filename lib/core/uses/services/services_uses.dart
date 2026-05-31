@@ -3,9 +3,8 @@ export 'installer_frameworks/installer_frameworks_service_use.dart';
 export 'dependencies/dependencies_service_use.dart';
 export 'installers/installers_service_use.dart';
 export 'software/software_service_use.dart';
-export 'software_registration/software_registration_service_use.dart';
 export 'settings/settings_service_use.dart';
 export 'installation/installation_service_use.dart';
 export 'logs/logs_service_use.dart';
 export 'packs/packs_service_use.dart';
-
+export 'software_registration/software_registration_service_use.dart';

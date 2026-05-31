@@ -36,4 +36,10 @@ abstract class InstallerFrameworksServiceRule {
   /// Deletes a non-built-in framework. Fails if isBuiltIn is true.
   /// Elimina un framework no integrado. Falla si isBuiltIn es true.
   Future<ResponseRule<Unit>> delete(int id);
+
+  /// Detects the installer framework for the binary at [filePath].
+  /// Returns [SuccessResponseRule] with null when no framework is recognized.
+  /// Detecta el framework del instalador en [filePath].
+  /// Devuelve SuccessResponseRule con null cuando no se reconoce ningún framework.
+  Future<ResponseRule<InstallerFrameworkDataRule?>> detectForFile(String filePath);
 }

@@ -196,8 +196,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
 
   bool _computeIsDone(List<QueueItemDataRule> items) {
     if (items.isEmpty) return true;
-    const terminalStatuses = {'completed', 'failed', 'cancelled', 'paused'};
-    return items.every((i) => terminalStatuses.contains(i.status));
+    return items.every((i) => i.status.isTerminal);
   }
 
   /// Subscribes to the Drift queue stream (UX-04). Replaces the 2-second
@@ -226,7 +225,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
           // reflect newly installed programs when the user navigates back.
           // Invalida el caché del registro de Windows para que los badges
           // de la biblioteca reflejen los programas recién instalados.
-          WindowsRegistryInfra.invalidateCache();
+          ref.read(softwareConsumerInjectionProvider).invalidateRegistryCache();
           ref.invalidate(installedSoftwareProvider);
           // Sesión terminada: limpia la cola transitoria.
           await ref.read(installationConsumerInjectionProvider).clearQueue();
@@ -312,7 +311,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     }
 
     final item = items
-        .where((i) => i.id == itemId && i.status == 'installing')
+        .where((i) => i.id == itemId && i.status == InstallationStatusEnumRule.installing)
         .firstOrNull;
 
     if (item == null) {
@@ -340,7 +339,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
     if (item.installerId == null || item.installerId!.isEmpty) {
       const msg = 'No hay instalador asociado a este software.';
       _failedCount++;
-      _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
+      _sessionSnapshot.add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: msg));
       await consumer.failInstallation(item.id, msg);
       return;
     }
@@ -354,7 +353,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         onFailure: (msg, _) => throw Exception(msg),
       );
 
-      final exePath = FilesystemInfra.instance.getInstallerExecutablePath(
+      final exePath = installersConsumer.getExecutablePath(
         installer.id,
         installer.mainExecutable,
       );
@@ -372,7 +371,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       );
       if (integrityError != null) {
         _sessionSnapshot
-            .add(item.copyWith(status: 'failed', errorMessage: integrityError));
+            .add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: integrityError));
         _failedCount++;
         await consumer.failInstallation(item.id, integrityError);
         return;
@@ -391,19 +390,25 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         onFailure: (_, _) => true, // default: verify
       );
       if (shouldVerify) {
-        final sigResult = await AuthenticodeInfra.check(exePath);
+        final sigResp = await installersConsumer.checkAuthenticode(exePath);
         if (_disposed) return;
-        if (sigResult.status == AuthenticodeStatus.notSigned) {
+        final sigResult = sigResp.resolve(
+          onSuccess: (data, _) => data,
+          onFailure: (_, _) => const AuthenticodeCheckDataRule(
+            status: AuthenticodeCheckStatus.unknown,
+          ),
+        );
+        if (sigResult.status == AuthenticodeCheckStatus.notSigned) {
           final msg = 'El instalador no tiene firma digital (Authenticode). '
               'Puedes desactivar esta verificación en Ajustes → '
               '"Verificar firma digital".';
           _sessionSnapshot
-              .add(item.copyWith(status: 'failed', errorMessage: msg));
+              .add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: msg));
           _failedCount++;
           await consumer.failInstallation(item.id, msg);
           return;
         }
-        if (sigResult.status == AuthenticodeStatus.untrusted) {
+        if (sigResult.status == AuthenticodeCheckStatus.untrusted) {
           final publisher = sigResult.publisher != null
               ? ' (firmado por: ${sigResult.publisher})'
               : '';
@@ -411,38 +416,36 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
               'Puedes desactivar esta verificación en Ajustes → '
               '"Verificar firma digital".';
           _sessionSnapshot
-              .add(item.copyWith(status: 'failed', errorMessage: msg));
+              .add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: msg));
           _failedCount++;
           await consumer.failInstallation(item.id, msg);
           return;
         }
-        // AuthenticodeStatus.unknown: could not verify — warn but continue.
+        // AuthenticodeCheckStatus.unknown: could not verify — warn but continue.
         // Status desconocido: no se pudo verificar — avisar pero continuar.
       }
 
-      List<String> args;
+      // Determine whether the software is auto-installable, then delegate
+      // the argument-building rule to the domain service (BN4).
+      // Determinar si el software es auto-instalable y delegar la regla de
+      // construcción de args al servicio de dominio (BN4).
+      bool isAutoInstallable = true;
       if (item.softwareId != null) {
         final softwareConsumer = ref.read(softwareConsumerInjectionProvider);
         final softwareResp = await softwareConsumer.getById(item.softwareId!);
-        final software = softwareResp.resolve(
-          onSuccess: (data, _) => data,
-          onFailure: (_, _) => null,
+        isAutoInstallable = softwareResp.resolve(
+          onSuccess: (data, _) => data.isAutoInstallable,
+          onFailure: (_, _) => true,
         );
-        final isAutoInstallable = software?.isAutoInstallable ?? true;
-        args = isAutoInstallable
-            ? (installer.silentArgs
-                    ?.split(' ')
-                    .where((s) => s.isNotEmpty)
-                    .toList() ??
-                <String>[])
-            : <String>[];
-      } else {
-        args = installer.silentArgs
-                ?.split(' ')
-                .where((s) => s.isNotEmpty)
-                .toList() ??
-            <String>[];
       }
+      final argsResp = await installersConsumer.buildProcessArgs(
+        installer.id,
+        isAutoInstallable,
+      );
+      final List<String> args = argsResp.resolve(
+        onSuccess: (data, _) => data,
+        onFailure: (_, _) => <String>[],
+      );
 
       final workingDir = File(exePath).parent.path;
       final process = await Process.start(
@@ -495,14 +498,14 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         final msg = 'Tiempo de espera agotado tras $_timeoutMinutes min. '
             'El proceso del instalador fue terminado.';
         _failedCount++;
-        _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
+        _sessionSnapshot.add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: msg));
         await consumer.failInstallation(item.id, msg);
         return;
       }
 
       if (exitCode == 0) {
         _completedCount++;
-        _sessionSnapshot.add(item.copyWith(status: 'completed'));
+        _sessionSnapshot.add(item.copyWith(status: InstallationStatusEnumRule.completed));
         await consumer.completeInstallation(item.id);
       } else {
         final err = _decodeProcessOutput(await stderrFuture);
@@ -516,7 +519,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
         final detail = parts.join('\n');
         _failedCount++;
         _sessionSnapshot
-            .add(item.copyWith(status: 'failed', errorMessage: detail));
+            .add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: detail));
         await consumer.failInstallation(item.id, detail);
       }
     } catch (e) {
@@ -525,7 +528,7 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       if (_killedItems.remove(item.id)) return;
       final msg = e.toString();
       _failedCount++;
-      _sessionSnapshot.add(item.copyWith(status: 'failed', errorMessage: msg));
+      _sessionSnapshot.add(item.copyWith(status: InstallationStatusEnumRule.failed, errorMessage: msg));
       await consumer.failInstallation(item.id, msg);
     }
   }

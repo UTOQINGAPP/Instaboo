@@ -87,4 +87,39 @@ final InstallersServiceRule _service;
       silentArgs: silentArgs,
     );
   }
+
+  // ── Business rules ──────────────────────────────────────────────────────────
+
+  /// Resolves the effective silent args using the domain priority chain.
+  Future<ResponseRule<String?>> resolveEffectiveSilentArgs({
+    int? frameworkId,
+    String? extraSilentArgs,
+    String? explicitSilentArgs,
+  }) => _service.resolveEffectiveSilentArgs(
+        frameworkId: frameworkId,
+        extraSilentArgs: extraSilentArgs,
+        explicitSilentArgs: explicitSilentArgs,
+      );
+
+  /// Builds the OS process argument list for an installer.
+  Future<ResponseRule<List<String>>> buildProcessArgs(
+    String installerId,
+    bool isAutoInstallable,
+  ) => _service.buildProcessArgs(installerId, isAutoInstallable);
+
+  // ── Filesystem paths ────────────────────────────────────────────────────────
+
+  /// Returns the absolute path to the main executable of an installer.
+  /// Pure path computation — synchronous and cannot fail.
+  /// Devuelve la ruta absoluta al ejecutable principal del instalador.
+  String getExecutablePath(String installerId, String mainExecutable) =>
+      _service.getExecutablePath(installerId, mainExecutable);
+
+  // ── Authenticode ────────────────────────────────────────────────────────────
+
+  /// Verifies the Authenticode (digital) signature of the file at [exePath].
+  /// Verifica la firma Authenticode del archivo en [exePath].
+  Future<ResponseRule<AuthenticodeCheckDataRule>> checkAuthenticode(
+    String exePath,
+  ) => _service.checkAuthenticode(exePath);
 }

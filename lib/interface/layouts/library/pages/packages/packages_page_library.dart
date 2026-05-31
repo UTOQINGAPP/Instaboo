@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/rules/data/data_rules.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/app/router/pages/pages_router.dart';
 import 'package:instaboo/interface/layouts/library/pages/packages/dialogs/dialogs_packages_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/packages/logic/logic_packages_library.dart';

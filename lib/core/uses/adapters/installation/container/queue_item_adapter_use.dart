@@ -27,7 +27,7 @@ class QueueItemAdapterUse {
         installerId: d.installerId,
         packId: d.packId,
         displayName: d.displayName,
-        status: d.status,
+        status: d.status.name, // enum → raw string for persistence layer
         progress: d.progress,
         queuePosition: d.queuePosition,
         errorMessage: d.errorMessage,

@@ -1,21 +1,27 @@
 import 'package:instaboo/core/infra/infra_core.dart';
 import 'package:instaboo/core/rules/rules_core.dart';
-import 'package:instaboo/core/uses/services/installer_frameworks/installer_frameworks_service_use.dart';
-import 'package:instaboo/core/uses/services/installers/installers_service_use.dart';
-import 'package:instaboo/core/uses/services/settings/settings_service_use.dart';
-import 'package:instaboo/core/uses/services/software/software_service_use.dart';
 
 /// Orchestrates software creation with optional icon and installer assets.
 /// Orquesta la creacion de software con icono e instalador opcionales.
 ///
-/// Internally delegates to [SoftwareServiceUse], [InstallersServiceUse],
-/// [InstallerFrameworksServiceUse] and [SettingsServiceUse].
+/// Receives [SoftwareServiceRule], [InstallersServiceRule],
+/// [InstallerFrameworksServiceRule] and [SettingsServiceRule] via constructor
+/// so the injection layer decides the concrete implementation (R14, DIP).
 class SoftwareRegistrationServiceUse implements SoftwareRegistrationServiceRule {
-  final SoftwareServiceRule _softwareService = SoftwareServiceUse();
-  final InstallersServiceRule _installersService = InstallersServiceUse();
-  final SettingsServiceRule _settingsService = SettingsServiceUse();
-  final InstallerFrameworksServiceRule _frameworksService =
-      InstallerFrameworksServiceUse();
+  final SoftwareServiceRule _softwareService;
+  final InstallersServiceRule _installersService;
+  final SettingsServiceRule _settingsService;
+  final InstallerFrameworksServiceRule _frameworksService;
+
+  SoftwareRegistrationServiceUse({
+    required SoftwareServiceRule softwareService,
+    required InstallersServiceRule installersService,
+    required SettingsServiceRule settingsService,
+    required InstallerFrameworksServiceRule frameworksService,
+  })  : _softwareService = softwareService,
+        _installersService = installersService,
+        _settingsService = settingsService,
+        _frameworksService = frameworksService;
 
   @override
   Future<ResponseRule<SoftwareDataRule>> createWithAssets({

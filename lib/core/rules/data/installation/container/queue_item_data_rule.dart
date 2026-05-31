@@ -1,10 +1,18 @@
+import 'package:instaboo/core/rules/enums/enums_rules.dart';
+
 class QueueItemDataRule {
   final int id;
   final int? softwareId;
   final String? installerId;
   final int? packId;
   final String displayName;
-  final String status; // pending, queued, installing, paused, cancelled
+
+  /// Typed status — use [InstallationStatusEnumRule] members and its getters
+  /// (isTerminal, isInProgress) instead of raw string comparisons.
+  /// Estado tipado — usar los miembros de [InstallationStatusEnumRule] y sus
+  /// getters (isTerminal, isInProgress) en vez de comparar strings crudos.
+  final InstallationStatusEnumRule status;
+
   final int progress; // 0-100
   final int? queuePosition;
   final String? errorMessage;
@@ -46,7 +54,7 @@ class QueueItemDataRule {
     installerId: installerId,
     packId: packId,
     displayName: displayName,
-    status: status,
+    status: InstallationStatusEnumRule.fromRaw(status),
     progress: progress,
     queuePosition: queuePosition,
     errorMessage: errorMessage,
@@ -61,7 +69,7 @@ class QueueItemDataRule {
     String? installerId,
     int? packId,
     String? displayName,
-    String? status,
+    InstallationStatusEnumRule? status,
     int? progress,
     int? queuePosition,
     String? errorMessage,

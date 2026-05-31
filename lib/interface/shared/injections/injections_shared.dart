@@ -1,7 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-import 'package:instaboo/core/rules/rules_core.dart';
-import 'package:instaboo/core/uses/uses_core.dart';
+import 'package:instaboo/core/core.dart';
 
 part 'injections_shared.g.dart';
 
@@ -75,8 +73,15 @@ InstallersServiceRule _installersServiceInjection(Ref ref) {
 /// Software registration service injection. Exposes [SoftwareRegistrationServiceRule].
 /// Inyección del servicio de registro de software. Expone [SoftwareRegistrationServiceRule].
 @Riverpod(keepAlive: true)
-SoftwareRegistrationServiceRule _softwareRegistrationServiceInjection(Ref ref) {
-  return SoftwareRegistrationServiceUse();
+SoftwareRegistrationServiceRule _softwareRegistrationServiceInjection(
+  Ref ref,
+) {
+  return SoftwareRegistrationServiceUse(
+    softwareService: ref.watch(_softwareServiceInjectionProvider),
+    installersService: ref.watch(_installersServiceInjectionProvider),
+    settingsService: ref.watch(_settingsServiceInjectionProvider),
+    frameworksService: ref.watch(_installerFrameworksServiceInjectionProvider),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -167,7 +172,9 @@ InstallersConsumerRule installersConsumerInjection(Ref ref) {
 /// Software registration consumer injection. Exposes [SoftwareRegistrationConsumerRule].
 /// Inyección del consumidor de registro de software. Expone [SoftwareRegistrationConsumerRule].
 @Riverpod(keepAlive: true)
-SoftwareRegistrationConsumerRule softwareRegistrationConsumerInjection(Ref ref) {
+SoftwareRegistrationConsumerRule softwareRegistrationConsumerInjection(
+  Ref ref,
+) {
   return SoftwareRegistrationConsumerRule(
     service: ref.watch(_softwareRegistrationServiceInjectionProvider),
   );

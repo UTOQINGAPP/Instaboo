@@ -5,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/rules/data/data_rules.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 import 'package:intl/intl.dart';
 

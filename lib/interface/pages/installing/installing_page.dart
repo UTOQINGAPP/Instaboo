@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/rules/data/data_rules.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/app/router/pages/pages_router.dart';
 import 'package:instaboo/interface/pages/installing/logic/logic_installing_page.dart';
 
@@ -202,8 +202,10 @@ class InstallingPage extends ConsumerWidget {
     );
   }
 
-  bool _canCancel(String status) =>
-      status == 'pending' || status == 'queued' || status == 'installing';
+  bool _canCancel(InstallationStatusEnumRule status) =>
+      status == InstallationStatusEnumRule.pending ||
+      status == InstallationStatusEnumRule.queued ||
+      status == InstallationStatusEnumRule.installing;
 }
 
 // ─── Queue item card ──────────────────────────────────────────────────────────
@@ -226,17 +228,19 @@ class _QueueItemCardState extends State<_QueueItemCard> {
   void initState() {
     super.initState();
     _updateElapsed();
-    if (widget.item.status == 'installing') _startTicker();
+    if (widget.item.status == InstallationStatusEnumRule.installing) {
+      _startTicker();
+    }
   }
 
   @override
   void didUpdateWidget(_QueueItemCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.item.status == 'installing' &&
-        oldWidget.item.status != 'installing') {
+    if (widget.item.status == InstallationStatusEnumRule.installing &&
+        oldWidget.item.status != InstallationStatusEnumRule.installing) {
       _updateElapsed();
       _startTicker();
-    } else if (widget.item.status != 'installing') {
+    } else if (widget.item.status != InstallationStatusEnumRule.installing) {
       _ticker?.cancel();
     }
   }
@@ -268,26 +272,26 @@ class _QueueItemCardState extends State<_QueueItemCard> {
   }
 
   Color _statusColor() => switch (widget.item.status) {
-        'installing' => Colors.blueAccent,
-        'cancelled' => Colors.orangeAccent,
-        'paused' => Colors.white38,
-        'queued' => Colors.white60,
+        InstallationStatusEnumRule.installing => Colors.blueAccent,
+        InstallationStatusEnumRule.cancelled => Colors.orangeAccent,
+        InstallationStatusEnumRule.paused => Colors.white38,
+        InstallationStatusEnumRule.queued => Colors.white60,
         _ => Colors.white38, // pending
       };
 
   IconData _statusIcon() => switch (widget.item.status) {
-        'installing' => Icons.downloading,
-        'cancelled' => Icons.cancel_outlined,
-        'paused' => Icons.pause_circle_outline,
-        'queued' => Icons.hourglass_top,
+        InstallationStatusEnumRule.installing => Icons.downloading,
+        InstallationStatusEnumRule.cancelled => Icons.cancel_outlined,
+        InstallationStatusEnumRule.paused => Icons.pause_circle_outline,
+        InstallationStatusEnumRule.queued => Icons.hourglass_top,
         _ => Icons.schedule, // pending
       };
 
   String _statusLabel() => switch (widget.item.status) {
-        'installing' => 'Instalando',
-        'cancelled' => 'Cancelado',
-        'paused' => 'Pausado',
-        'queued' => 'En cola',
+        InstallationStatusEnumRule.installing => 'Instalando',
+        InstallationStatusEnumRule.cancelled => 'Cancelado',
+        InstallationStatusEnumRule.paused => 'Pausado',
+        InstallationStatusEnumRule.queued => 'En cola',
         _ => 'Pendiente',
       };
 
@@ -295,7 +299,8 @@ class _QueueItemCardState extends State<_QueueItemCard> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final color = _statusColor();
-    final isInstalling = widget.item.status == 'installing';
+    final isInstalling =
+        widget.item.status == InstallationStatusEnumRule.installing;
 
     return Card(
       color: Colors.white.withValues(alpha: 0.07),

@@ -7,3 +7,5 @@ export 'installation/installation_adapters_uses.dart';
 export 'logs/log_adapter_use.dart';
 export 'settings/setting_adapter_use.dart';
 export 'software/software_adapter_use.dart';
+export 'registry/registry_adapter_use.dart';
+export 'authenticode/authenticode_adapter_use.dart';

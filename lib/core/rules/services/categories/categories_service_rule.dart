@@ -42,8 +42,4 @@ abstract class CategoriesServiceRule {
   /// Reordena una categoría.
   Future<ResponseRule<Unit>> reorder(int categoryId, int newSortOrder);
   
-  /// Returns the software in a category.
-  /// Devuelve el software en una categoría.
-  Future<ResponseRule<List<SoftwareDataRule>>> getSoftwareInCategory(int categoryId);
-
 }

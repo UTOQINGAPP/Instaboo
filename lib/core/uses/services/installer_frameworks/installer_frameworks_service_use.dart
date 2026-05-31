@@ -137,4 +137,21 @@ class InstallerFrameworksServiceUse implements InstallerFrameworksServiceRule {
       return FailureResponseRule(message: e.toString());
     }
   }
+
+  @override
+  Future<ResponseRule<InstallerFrameworkDataRule?>> detectForFile(
+    String filePath,
+  ) async {
+    try {
+      final detectedName = await InstallerDetectorInfra.detect(filePath);
+      if (detectedName == null) return const SuccessResponseRule(data: null);
+      final resp = await getByName(detectedName);
+      return resp.resolve(
+        onSuccess: (fw, _) => SuccessResponseRule(data: fw),
+        onFailure: (_, _) => const SuccessResponseRule(data: null),
+      );
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
 }

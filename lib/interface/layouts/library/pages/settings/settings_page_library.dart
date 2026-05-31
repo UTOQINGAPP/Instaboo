@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/rules/rules_core.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 
 // ─── Providers ────────────────────────────────────────────────────────────────

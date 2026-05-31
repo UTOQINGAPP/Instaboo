@@ -1,5 +1,4 @@
-import 'package:instaboo/core/infra/infra_core.dart';
-import 'package:instaboo/core/rules/rules_core.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/models/models_library.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

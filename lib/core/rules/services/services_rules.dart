@@ -1,10 +1,10 @@
 export 'categories/categories_service_rule.dart';
 export 'installer_frameworks/installer_frameworks_service_rule.dart';
 export 'software/software_service_rule.dart';
-export 'software_registration/software_registration_service_rule.dart';
 export 'installation/installation_service_rule.dart';
 export 'packs/packs_service_rule.dart';
 export 'settings/settings_service_rule.dart';
 export 'logs/logs_service_rule.dart';
 export 'dependencies/dependencies_service_rule.dart';
 export 'installers/installers_service_rule.dart';
+export 'software_registration/software_registration_service_rule.dart';

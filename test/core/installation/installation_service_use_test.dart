@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:instaboo/core/infra/database/app/app_database_infra.dart';
 import 'package:instaboo/core/rules/responses/responses_rules.dart';
+import 'package:instaboo/core/rules/enums/installation/container/installation_status_enum_rule.dart';
 import 'package:instaboo/core/uses/services/installation/installation_service_use.dart';
 
 /// Unit tests for [InstallationServiceUse] running against an in-memory
@@ -100,7 +101,7 @@ void main() {
 
       final queue = expectOk(await service.getQueue());
       expect(queue.length, 2);
-      expect(queue.every((i) => i.status == 'queued'), isTrue);
+      expect(queue.every((i) => i.status == InstallationStatusEnumRule.queued), isTrue);
       expect(queue.every((i) => i.queuePosition != null), isTrue);
     });
   });
@@ -148,7 +149,7 @@ void main() {
       expectOk(await service.cancelQueueItem(id));
 
       final queue = expectOk(await service.getQueue());
-      expect(queue.single.status, 'cancelled');
+      expect(queue.single.status, InstallationStatusEnumRule.cancelled);
     });
   });
 

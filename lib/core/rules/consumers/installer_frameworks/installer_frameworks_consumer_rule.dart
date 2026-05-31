@@ -47,4 +47,11 @@ class InstallerFrameworksConsumerRule {
   /// Deletes a non-built-in framework.
   /// Elimina un framework no integrado.
   Future<ResponseRule<Unit>> delete(int id) => _service.delete(id);
+
+  /// Detects the installer framework for the binary at [filePath].
+  /// Returns null data when no framework is recognized.
+  /// Detecta el framework del instalador para el binario en [filePath].
+  Future<ResponseRule<InstallerFrameworkDataRule?>> detectForFile(
+    String filePath,
+  ) => _service.detectForFile(filePath);
 }

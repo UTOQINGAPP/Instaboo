@@ -572,7 +572,7 @@ final class _SoftwareRegistrationServiceInjectionProvider
 }
 
 String _$_softwareRegistrationServiceInjectionHash() =>
-    r'761a83c29cacceb70e3b51de72840ba303dd42b5';
+    r'9a09e436df6a4e24a5ab102c525598ea4d534fcc';
 
 /// Installation consumer injection. Exposes [InstallationConsumerRule].
 /// Inyección del consumidor de instalaciones. Expone [InstallationConsumerRule].

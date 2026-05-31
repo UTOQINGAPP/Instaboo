@@ -1,1 +1,1 @@
-export 'assets/assets_config.dart';
+export 'assets/app/assets_config.dart';

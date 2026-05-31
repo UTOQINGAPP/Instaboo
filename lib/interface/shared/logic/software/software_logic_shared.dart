@@ -1,4 +1,4 @@
-import 'package:instaboo/core/rules/rules_core.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

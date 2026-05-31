@@ -29,6 +29,9 @@ class SoftwareConsumerRule {
   Future<ResponseRule<List<SoftwareDataRule>>> getAll({int? categoryId, bool? activeOnly}) =>
       _service.getAll(categoryId: categoryId, activeOnly: activeOnly);
 
+  Future<ResponseRule<List<SoftwareDataRule>>> getByIds(List<int> ids) =>
+      _service.getByIds(ids);
+
   Future<ResponseRule<SoftwareDataRule>> getBySlug(String slug) =>
       _service.getBySlug(slug);
 
@@ -66,4 +69,29 @@ class SoftwareConsumerRule {
 
   Future<ResponseRule<List<SoftwareDataRule>>> filterByArchitecture(String architecture) =>
       _service.filterByArchitecture(architecture);
+
+  List<SoftwareDataRule> searchInMemory(List<SoftwareDataRule> items, String query) =>
+      _service.searchInMemory(items, query);
+
+  InstalledSoftwareInfoRule? findBestMatchInList(
+    List<InstalledSoftwareInfoRule> items,
+    String softwareName,
+  ) => _service.findBestMatchInList(items, softwareName);
+
+  // ── Filesystem paths ────────────────────────────────────────────────────────
+
+  String getIconPath(String iconFilename) =>
+      _service.getIconPath(iconFilename);
+
+  // ── Windows Registry ────────────────────────────────────────────────────────
+
+  Future<ResponseRule<List<InstalledSoftwareInfoRule>>> getInstalledFromRegistry({
+    bool forceRefresh = false,
+  }) => _service.getInstalledFromRegistry(forceRefresh: forceRefresh);
+
+  Future<ResponseRule<InstalledSoftwareInfoRule?>> findMatchInRegistry(
+    String softwareName,
+  ) => _service.findMatchInRegistry(softwareName);
+
+  void invalidateRegistryCache() => _service.invalidateRegistryCache();
 }

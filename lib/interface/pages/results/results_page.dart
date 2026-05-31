@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/rules/data/data_rules.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/app/router/library/library_router.dart';
 import 'package:instaboo/interface/app/router/pages/pages_router.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
@@ -17,9 +17,15 @@ class ResultsPage extends ConsumerWidget {
     final items = ref.watch(sessionResultsProvider);
     final textTheme = Theme.of(context).textTheme;
 
-    final completed = items.where((i) => i.status == 'completed').length;
-    final failed = items.where((i) => i.status == 'failed').length;
-    final cancelled = items.where((i) => i.status == 'cancelled').length;
+    final completed = items
+        .where((i) => i.status == InstallationStatusEnumRule.completed)
+        .length;
+    final failed = items
+        .where((i) => i.status == InstallationStatusEnumRule.failed)
+        .length;
+    final cancelled = items
+        .where((i) => i.status == InstallationStatusEnumRule.cancelled)
+        .length;
 
     return Material(
       color: Colors.transparent,
@@ -219,30 +225,30 @@ class _SessionItem extends StatelessWidget {
   final QueueItemDataRule item;
   const _SessionItem({required this.item});
 
-  Color _statusColor(String status) => switch (status) {
-        'completed' => Colors.greenAccent,
-        'failed' => Colors.redAccent,
-        'cancelled' => Colors.orangeAccent,
-        'paused' => Colors.blueAccent,
+  Color _statusColor(InstallationStatusEnumRule status) => switch (status) {
+        InstallationStatusEnumRule.completed => Colors.greenAccent,
+        InstallationStatusEnumRule.failed => Colors.redAccent,
+        InstallationStatusEnumRule.cancelled => Colors.orangeAccent,
+        InstallationStatusEnumRule.paused => Colors.blueAccent,
         _ => Colors.white54,
       };
 
-  IconData _statusIcon(String status) => switch (status) {
-        'completed' => Icons.check_circle,
-        'failed' => Icons.cancel,
-        'cancelled' => Icons.remove_circle,
-        'paused' => Icons.pause_circle,
+  IconData _statusIcon(InstallationStatusEnumRule status) => switch (status) {
+        InstallationStatusEnumRule.completed => Icons.check_circle,
+        InstallationStatusEnumRule.failed => Icons.cancel,
+        InstallationStatusEnumRule.cancelled => Icons.remove_circle,
+        InstallationStatusEnumRule.paused => Icons.pause_circle,
         _ => Icons.help_outline,
       };
 
-  String _statusLabel(String status) => switch (status) {
-        'completed' => 'Completado',
-        'failed' => 'Fallido',
-        'cancelled' => 'Cancelado',
-        'paused' => 'Pausado',
-        'installing' => 'Instalando',
-        'queued' => 'En cola',
-        _ => status,
+  String _statusLabel(InstallationStatusEnumRule status) => switch (status) {
+        InstallationStatusEnumRule.completed => 'Completado',
+        InstallationStatusEnumRule.failed => 'Fallido',
+        InstallationStatusEnumRule.cancelled => 'Cancelado',
+        InstallationStatusEnumRule.paused => 'Pausado',
+        InstallationStatusEnumRule.installing => 'Instalando',
+        InstallationStatusEnumRule.queued => 'En cola',
+        InstallationStatusEnumRule.pending => 'Pendiente',
       };
 
   @override

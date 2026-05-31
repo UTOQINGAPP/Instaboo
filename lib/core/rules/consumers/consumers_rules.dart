@@ -1,10 +1,10 @@
 export 'categories/categories_consumer_rule.dart';
 export 'installer_frameworks/installer_frameworks_consumer_rule.dart';
 export 'software/software_consumer_rule.dart';
-export 'software_registration/software_registration_consumer_rule.dart';
 export 'installation/installation_consumer_rule.dart';
 export 'packs/packs_consumer_rule.dart';
 export 'settings/settings_consumer_rule.dart';
 export 'logs/logs_consumer_rule.dart';
 export 'dependencies/dependencies_consumer_rule.dart';
 export 'installers/installers_consumer_rule.dart';
+export 'software_registration/software_registration_consumer_rule.dart';

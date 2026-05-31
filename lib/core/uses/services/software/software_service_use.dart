@@ -83,6 +83,20 @@ class SoftwareServiceUse implements SoftwareServiceRule {
   }
 
   @override
+  Future<ResponseRule<List<SoftwareDataRule>>> getByIds(List<int> ids) async {
+    if (ids.isEmpty) return const SuccessResponseRule(data: []);
+    try {
+      final rows = await (_database.select(_database.softwareTable)
+            ..where((t) => t.id.isIn(ids))
+            ..orderBy([(t) => OrderingTerm.asc(t.name)]))
+          .get();
+      return SuccessResponseRule(data: rows.map(_dataRuleFromRow).toList());
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  @override
   Future<ResponseRule<List<SoftwareDataRule>>> filterByArchitecture(
     String architecture,
   ) async {
@@ -173,12 +187,14 @@ class SoftwareServiceUse implements SoftwareServiceRule {
     if (trimmed.isEmpty) return const SuccessResponseRule(data: []);
     try {
       final pattern = '%${_escapeLikePattern(trimmed)}%';
+      // Fields match the canonical definition in SoftwareServiceRule.searchInMemory:
+      // name, description, publisher.
       final rows = await (_database.select(_database.softwareTable)
             ..where(
               (t) =>
                   t.name.like(pattern) |
-                  t.slug.like(pattern) |
-                  t.description.like(pattern),
+                  t.description.like(pattern) |
+                  t.publisher.like(pattern),
             )
             ..orderBy([(t) => OrderingTerm.asc(t.name)]))
           .get();
@@ -334,5 +350,120 @@ class SoftwareServiceUse implements SoftwareServiceRule {
     } catch (e) {
       return FailureResponseRule(message: e.toString());
     }
+  }
+
+  // ── Filesystem paths ────────────────────────────────────────────────────────
+
+  @override
+  String getIconPath(String iconFilename) =>
+      _filesystem.getIconPath(iconFilename);
+
+  // ── Windows Registry ────────────────────────────────────────────────────────
+
+  @override
+  Future<ResponseRule<List<InstalledSoftwareInfoRule>>> getInstalledFromRegistry({
+    bool forceRefresh = false,
+  }) async {
+    try {
+      final rawMaps = await WindowsRegistryInfra.getAll(forceRefresh: forceRefresh);
+      final data = rawMaps
+          .map(RegistryOriginUse.fromMap)
+          .map(RegistryAdapterUse.toDataRule)
+          .toList();
+      return SuccessResponseRule(data: data);
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  @override
+  Future<ResponseRule<InstalledSoftwareInfoRule?>> findMatchInRegistry(
+    String softwareName,
+  ) async {
+    try {
+      if (softwareName.trim().isEmpty) return const SuccessResponseRule(data: null);
+      final rawMaps = await WindowsRegistryInfra.getAll();
+      final query     = softwareName.toLowerCase().trim();
+      final queryNorm = _normRegistryName(query);
+      final queryCpct = _compactRegistryName(query);
+
+      Map<String, dynamic>? matched;
+
+      for (final m in rawMaps) {
+        final raw     = m['DisplayName'].toString();
+        final key     = raw.toLowerCase();
+        final keyNorm = _normRegistryName(key);
+        final keyCpct = _compactRegistryName(key);
+
+        // 1. Exact (lowercase)
+        if (key == query) { matched = m; break; }
+        // 2. Exact after normalisation (strips parentheticals & extra spaces)
+        if (keyNorm == queryNorm) { matched = m; break; }
+        // 3. Compact match (handles "notepad ++" vs "notepad++")
+        if (keyCpct == queryCpct) { matched = m; break; }
+        // 4. Compact contains (registry entry starts with query, e.g. "notepad++ 8.6")
+        if (keyCpct.contains(queryCpct) || queryCpct.contains(keyCpct)) {
+          matched = m; break;
+        }
+      }
+
+      if (matched == null) return const SuccessResponseRule(data: null);
+      final origin = RegistryOriginUse.fromMap(matched);
+      return SuccessResponseRule(data: RegistryAdapterUse.toDataRule(origin));
+    } catch (e) {
+      return FailureResponseRule(message: e.toString());
+    }
+  }
+
+  /// Normalises a registry display name for fuzzy matching:
+  /// lowercase + strip parenthetical suffixes + collapse whitespace.
+  static String _normRegistryName(String s) => s
+      .toLowerCase()
+      .replaceAll(RegExp(r'\s*\(.*?\)'), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  /// Compact form: remove ALL whitespace (handles "notepad ++" vs "notepad++").
+  static String _compactRegistryName(String s) =>
+      s.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+
+  @override
+  void invalidateRegistryCache() => WindowsRegistryInfra.invalidateCache();
+
+  @override
+  List<SoftwareDataRule> searchInMemory(
+    List<SoftwareDataRule> items,
+    String query,
+  ) {
+    if (query.trim().isEmpty) return items;
+    final lower = query.toLowerCase();
+    return items.where((s) =>
+      s.name.toLowerCase().contains(lower) ||
+      (s.description?.toLowerCase().contains(lower) ?? false) ||
+      (s.publisher?.toLowerCase().contains(lower) ?? false),
+    ).toList();
+  }
+
+  @override
+  InstalledSoftwareInfoRule? findBestMatchInList(
+    List<InstalledSoftwareInfoRule> items,
+    String softwareName,
+  ) {
+    if (softwareName.trim().isEmpty) return null;
+    final query     = softwareName.toLowerCase().trim();
+    final queryNorm = _normRegistryName(query);
+    final queryCpct = _compactRegistryName(query);
+
+    for (final item in items) {
+      final key     = item.displayName.toLowerCase();
+      final keyNorm = _normRegistryName(key);
+      final keyCpct = _compactRegistryName(key);
+
+      if (key == query)                                                return item;
+      if (keyNorm == queryNorm)                                        return item;
+      if (keyCpct == queryCpct)                                        return item;
+      if (keyCpct.contains(queryCpct) || queryCpct.contains(keyCpct)) return item;
+    }
+    return null;
   }
 }

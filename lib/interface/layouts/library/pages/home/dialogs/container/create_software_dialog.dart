@@ -1,8 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:instaboo/core/infra/infra_core.dart';
-import 'package:instaboo/core/rules/rules_core.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/logic/logic_home_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/models/models_library.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';

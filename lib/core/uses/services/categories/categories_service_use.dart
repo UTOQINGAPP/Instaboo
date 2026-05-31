@@ -180,35 +180,6 @@ class CategoriesServiceUse implements CategoriesServiceRule {
   }
 
   @override
-  Future<ResponseRule<List<SoftwareDataRule>>> getSoftwareInCategory(
-    int categoryId,
-  ) async {
-    try {
-      final cat = await (_database.select(_database.categoriesTable)
-            ..where((t) => t.id.equals(categoryId)))
-          .getSingleOrNull();
-      if (cat == null) {
-        return const FailureResponseRule(message: 'Category not found.');
-      }
-      final rows = await (_database.select(_database.softwareTable)
-            ..where((t) => t.categoryId.equals(categoryId))
-            ..orderBy([(t) => OrderingTerm.asc(t.name)]))
-          .get();
-      return SuccessResponseRule(
-        data: rows
-            .map(
-              (r) => SoftwareAdapterUse.toDataRule(
-                SoftwareOriginUse.fromDrift(r),
-              ),
-            )
-            .toList(),
-      );
-    } catch (e) {
-      return FailureResponseRule(message: e.toString());
-    }
-  }
-
-  @override
   Future<ResponseRule<Unit>> reorder(int categoryId, int newSortOrder) async {
     try {
       final n = await (_database.update(_database.categoriesTable)

@@ -1,4 +1,4 @@
-import 'package:instaboo/core/rules/rules_core.dart';
+import 'package:instaboo/core/core.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'session_results_provider.g.dart';

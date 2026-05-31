@@ -201,4 +201,5 @@ class SoftwareDataRule {
     createdAt,
     updatedAt,
   ]);
+
 }

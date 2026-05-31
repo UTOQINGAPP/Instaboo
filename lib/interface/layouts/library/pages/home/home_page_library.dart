@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
-import 'package:instaboo/interface/layouts/library/components/components_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/dialogs/dialogs_home_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/logic/logic_home_library.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
-import 'package:instaboo/core/rules/data/data_rules.dart';
+import 'package:instaboo/core/core.dart';
 
 class HomePageLibrary extends ConsumerStatefulWidget {
   const HomePageLibrary({super.key});
@@ -48,6 +47,24 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
     _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Returns the best-matching installed program for [name], or null if none.
+  /// Tries an exact lower-case key first, then a contains-based fallback.
+  ///
+  /// Retorna el programa instalado que mejor coincide con [name], o null.
+  InstalledSoftwareInfoRule? _findInstalled(
+    Map<String, InstalledSoftwareInfoRule> map,
+    String name,
+  ) {
+    final key = name.toLowerCase();
+    if (map.containsKey(key)) return map[key];
+    for (final entry in map.entries) {
+      if (entry.key.contains(key) || key.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 
   @override
@@ -194,8 +211,8 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                     itemBuilder: (context, index) {
                       final software = softwareList[index];
                       final installed =
-                          findInstalled(installedMap, software.name);
-                      return ItemSoftwareComponentLibrary(
+                          _findInstalled(installedMap, software.name);
+                      return ItemSoftwareComponentShared(
                         logoPath: software.logo ?? AssetsConfig.logo,
                         name: software.name,
                         description: software.description ?? '',

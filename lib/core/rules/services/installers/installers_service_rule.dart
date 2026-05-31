@@ -64,4 +64,54 @@ abstract class InstallersServiceRule {
     String sourceFilePath, {
     String? silentArgs,
   });
+
+  // ── Business rules ──────────────────────────────────────────────────────────
+
+  /// Resolves the effective silent args for an installation using the priority chain:
+  ///   1. [explicitSilentArgs] — caller-provided, highest priority
+  ///   2. Framework args + [extraSilentArgs] — from the installer framework
+  ///   3. `default_silent_args` global setting — lowest priority
+  ///
+  /// Returns null when no silent args apply.
+  /// interface/ must NOT re-implement this priority chain.
+  ///
+  /// Resuelve los silent args efectivos con la cadena de prioridad:
+  ///   1. explicitSilentArgs — del caller, máxima prioridad
+  ///   2. Args del framework + extraSilentArgs
+  ///   3. Setting global default_silent_args — mínima prioridad
+  Future<ResponseRule<String?>> resolveEffectiveSilentArgs({
+    int? frameworkId,
+    String? extraSilentArgs,
+    String? explicitSilentArgs,
+  });
+
+  /// Builds the process argument list for launching an installer.
+  ///
+  /// When [isAutoInstallable] is false, returns an empty list (interactive install).
+  /// Otherwise parses [installerId]'s silentArgs splitting by whitespace.
+  ///
+  /// Construye la lista de argumentos para lanzar el instalador.
+  /// Si [isAutoInstallable] es false, devuelve lista vacía (instalación interactiva).
+  Future<ResponseRule<List<String>>> buildProcessArgs(
+    String installerId,
+    bool isAutoInstallable,
+  );
+
+  // ── Filesystem paths ────────────────────────────────────────────────────────
+
+  /// Returns the absolute path to the main executable of an installer.
+  /// Pure path computation — synchronous and cannot fail.
+  /// Devuelve la ruta absoluta al ejecutable principal de un instalador.
+  String getExecutablePath(String installerId, String mainExecutable);
+
+  // ── Authenticode ────────────────────────────────────────────────────────────
+
+  /// Verifies the Authenticode (digital) signature of the file at [exePath].
+  /// Never fails — returns [AuthenticodeCheckStatus.unknown] on any error.
+  ///
+  /// Verifica la firma Authenticode del archivo en [exePath].
+  /// Nunca falla — devuelve unknown ante cualquier error.
+  Future<ResponseRule<AuthenticodeCheckDataRule>> checkAuthenticode(
+    String exePath,
+  );
 }

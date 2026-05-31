@@ -3,7 +3,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/configs/configs.dart';
 import 'package:instaboo/core/core.dart';
 import 'package:instaboo/interface/app/router/pages/pages_router.dart';
-import 'package:instaboo/interface/layouts/library/components/components_library.dart';
 import 'package:instaboo/interface/pages/installing/logic/logic_installing_page.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
 
@@ -150,11 +149,9 @@ class _InstallerPageState extends ConsumerState<InstallerPage> {
           );
         }
 
-        // Installed-software map for badges (NF-04).
-        final installedMap = ref
-            .watch(installedSoftwareMapProvider)
-            .value ??
-            <String, InstalledSoftwareInfoRule>{};
+        // Installed-software list for badges (NF-04).
+        final installedList =
+            ref.watch(installedSoftwareProvider).value ?? const [];
 
         return ListView.builder(
           padding:
@@ -165,11 +162,13 @@ class _InstallerPageState extends ConsumerState<InstallerPage> {
             final hasInstaller =
                 sw.installerId != null && sw.installerId!.isNotEmpty;
             final isSelected = _selectedIds.contains(sw.id);
-            final installed = findInstalled(installedMap, sw.name);
+            final installed = ref
+                .read(softwareConsumerInjectionProvider)
+                .findBestMatchInList(installedList, sw.name);
 
             return Opacity(
               opacity: hasInstaller ? 1.0 : 0.45,
-              child: ItemSoftwareComponentLibrary(
+              child: ItemSoftwareComponentShared(
                 logoPath: _logoPath(sw),
                 name: sw.name,
                 description: hasInstaller
