@@ -222,6 +222,12 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
           // eliminan de la cola al completar/fallar, así que `items` puede
           // estar vacío en este punto.
           await _sendBatchNotification();
+          // Invalidate the Windows registry cache so the library badges
+          // reflect newly installed programs when the user navigates back.
+          // Invalida el caché del registro de Windows para que los badges
+          // de la biblioteca reflejen los programas recién instalados.
+          WindowsRegistryInfra.invalidateCache();
+          ref.invalidate(installedSoftwareProvider);
           // Sesión terminada: limpia la cola transitoria.
           await ref.read(installationConsumerInjectionProvider).clearQueue();
         }

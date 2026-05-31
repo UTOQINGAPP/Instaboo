@@ -7,6 +7,7 @@ import 'package:instaboo/interface/layouts/library/components/components_library
 import 'package:instaboo/interface/layouts/library/pages/home/dialogs/dialogs_home_library.dart';
 import 'package:instaboo/interface/layouts/library/pages/home/logic/logic_home_library.dart';
 import 'package:instaboo/interface/shared/shared_interface.dart';
+import 'package:instaboo/core/rules/data/data_rules.dart';
 
 class HomePageLibrary extends ConsumerStatefulWidget {
   const HomePageLibrary({super.key});
@@ -183,14 +184,23 @@ class _HomePageLibraryState extends ConsumerState<HomePageLibrary> {
                     return Center(child: Text('No hay software registrado'));
                   }
 
+                  // Load installed-software map for badges (NF-04).
+                  final installedMap = ref
+                          .watch(installedSoftwareMapProvider)
+                          .value ??
+                      <String, InstalledSoftwareInfoRule>{};
+
                   return ListView.builder(
                     itemBuilder: (context, index) {
                       final software = softwareList[index];
+                      final installed =
+                          findInstalled(installedMap, software.name);
                       return ItemSoftwareComponentLibrary(
                         logoPath: software.logo ?? AssetsConfig.logo,
                         name: software.name,
                         description: software.description ?? '',
                         categories: [software.category?.name ?? ''],
+                        installedVersion: installed?.displayVersion,
                         onEdit: () {
                           showGeneralDialog(
                             context: context,

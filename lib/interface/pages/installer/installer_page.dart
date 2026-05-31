@@ -150,6 +150,12 @@ class _InstallerPageState extends ConsumerState<InstallerPage> {
           );
         }
 
+        // Installed-software map for badges (NF-04).
+        final installedMap = ref
+            .watch(installedSoftwareMapProvider)
+            .value ??
+            <String, InstalledSoftwareInfoRule>{};
+
         return ListView.builder(
           padding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -159,6 +165,7 @@ class _InstallerPageState extends ConsumerState<InstallerPage> {
             final hasInstaller =
                 sw.installerId != null && sw.installerId!.isNotEmpty;
             final isSelected = _selectedIds.contains(sw.id);
+            final installed = findInstalled(installedMap, sw.name);
 
             return Opacity(
               opacity: hasInstaller ? 1.0 : 0.45,
@@ -171,6 +178,7 @@ class _InstallerPageState extends ConsumerState<InstallerPage> {
                 categories: [],
                 isEditableAndDeletable: false,
                 isSelectable: true,
+                installedVersion: installed?.displayVersion,
                 value: isSelected,
                 onChanged: hasInstaller
                     ? (value) => setState(() {

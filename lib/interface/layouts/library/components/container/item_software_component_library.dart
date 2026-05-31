@@ -15,6 +15,10 @@ class ItemSoftwareComponentLibrary extends StatefulWidget {
   final bool? value;
   final ValueChanged<bool>? onChanged;
   final VoidCallback? onTap;
+  /// If non-null, shows a "Ya instalado" badge with the version (NF-04).
+  /// Si no es null, muestra un badge "Ya instalado" con la versión (NF-04).
+  final String? installedVersion;
+
   const ItemSoftwareComponentLibrary({
     super.key,
     required this.logoPath,
@@ -28,6 +32,7 @@ class ItemSoftwareComponentLibrary extends StatefulWidget {
     this.value,
     this.onChanged,
     this.onTap,
+    this.installedVersion,
   });
 
   @override
@@ -84,6 +89,28 @@ class _ItemSoftwareComponentLibraryState
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            // Installed badge (NF-04)
+            if (widget.installedVersion != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle,
+                      size: 13, color: Color(0xFF4CAF50)),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.installedVersion!.isNotEmpty
+                        ? 'Instalado v${widget.installedVersion}'
+                        : 'Instalado',
+                    style: textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF4CAF50),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+            ],
             Text(
               widget.description,
               style: textTheme.bodySmall?.copyWith(
