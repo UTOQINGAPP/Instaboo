@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   flutter_acrylic
-  local_notifier
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
