@@ -708,8 +708,10 @@ class _HostnamePanel extends StatelessWidget {
     }
 
     return SizedBox(
-      width: 180,
-      child: Column(
+      width: 188,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 12),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -749,6 +751,7 @@ class _HostnamePanel extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -1207,49 +1210,67 @@ class _DropdownFilter<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: value != null
-            ? Colors.blueAccent.withValues(alpha: 0.2)
-            : Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: value != null ? Colors.blueAccent : Colors.transparent,
-          width: 1,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T?>(
-          value: value,
-          hint: Text(
-            hint,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
+    final isActive = value != null;
+    final label = isActive ? items[value] ?? hint : hint;
+
+    return PopupMenuButton<T?>(
+      onSelected: onChanged,
+      color: const Color(0xFF1E1E2E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      offset: const Offset(0, 36),
+      itemBuilder: (_) => [
+        PopupMenuItem<T?>(
+          value: null,
+          child: Text(
+            'Todos',
+            style: TextStyle(
+              color: value == null ? Colors.white : Colors.white54,
+              fontSize: 12,
+            ),
           ),
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-          dropdownColor: const Color(0xFF1E1E2E),
-          iconSize: 16,
-          iconEnabledColor: value != null ? Colors.blueAccent : Colors.white54,
-          items: [
-            DropdownMenuItem<T?>(
-              value: null,
-              child: Text(
-                'Todos',
-                style: TextStyle(
-                  color: value == null ? Colors.white : Colors.white54,
-                  fontSize: 12,
-                ),
+        ),
+        ...items.entries.map(
+          (e) => PopupMenuItem<T?>(
+            value: e.key,
+            child: Text(
+              e.value,
+              style: TextStyle(
+                color: value == e.key ? Colors.blueAccent : Colors.white,
+                fontSize: 12,
               ),
             ),
-            ...items.entries.map(
-              (e) => DropdownMenuItem<T?>(
-                value: e.key,
-                child: Text(e.value, style: const TextStyle(fontSize: 12)),
+          ),
+        ),
+      ],
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: isActive
+              ? Colors.blueAccent.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isActive ? Colors.blueAccent : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.blueAccent : Colors.white54,
+                fontSize: 12,
               ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down,
+              size: 16,
+              color: isActive ? Colors.blueAccent : Colors.white38,
             ),
           ],
-          onChanged: onChanged,
         ),
       ),
     );
