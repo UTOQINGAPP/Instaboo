@@ -133,6 +133,11 @@ class AppDatabaseInfra extends _$AppDatabaseInfra {
             " VALUES ('install_timeout_minutes', '15', 'integer',"
             " 'Per-installer timeout in minutes; 0 disables it.');",
           );
+          await customStatement(
+            "INSERT OR IGNORE INTO settings (key, value, value_type, description)"
+            " VALUES ('verify_authenticode', '1', 'boolean',"
+            " 'Verify Authenticode signature before running an installer. Disable to allow unsigned binaries. / Verificar firma Authenticode antes de ejecutar un instalador. Desactivar para permitir binarios sin firmar.');",
+          );
           // Remove the obsolete run_as_admin setting: the app always runs
           // elevated via the manifest, so this flag is dead.
           // Elimina el setting obsoleto run_as_admin: la app siempre corre

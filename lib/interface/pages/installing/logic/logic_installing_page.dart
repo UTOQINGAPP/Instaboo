@@ -373,8 +373,51 @@ class InstallingPageLogic extends AsyncNotifier<InstallingPageState> {
       if (integrityError != null) {
         _sessionSnapshot
             .add(item.copyWith(status: 'failed', errorMessage: integrityError));
+        _failedCount++;
         await consumer.failInstallation(item.id, integrityError);
         return;
+      }
+
+      // Authenticode pre-flight (SEC-03): check digital signature if enabled.
+      // Skip only when verify_authenticode is explicitly set to false.
+      // Pre-vuelo Authenticode (SEC-03): verifica firma digital si está activado.
+      // Solo se omite cuando verify_authenticode está en false.
+      final verifyResp = await ref
+          .read(settingsConsumerInjectionProvider)
+          .getBool('verify_authenticode');
+      if (_disposed) return;
+      final shouldVerify = verifyResp.resolve(
+        onSuccess: (v, _) => v,
+        onFailure: (_, _) => true, // default: verify
+      );
+      if (shouldVerify) {
+        final sigResult = await AuthenticodeInfra.check(exePath);
+        if (_disposed) return;
+        if (sigResult.status == AuthenticodeStatus.notSigned) {
+          final msg = 'El instalador no tiene firma digital (Authenticode). '
+              'Puedes desactivar esta verificación en Ajustes → '
+              '"Verificar firma digital".';
+          _sessionSnapshot
+              .add(item.copyWith(status: 'failed', errorMessage: msg));
+          _failedCount++;
+          await consumer.failInstallation(item.id, msg);
+          return;
+        }
+        if (sigResult.status == AuthenticodeStatus.untrusted) {
+          final publisher = sigResult.publisher != null
+              ? ' (firmado por: ${sigResult.publisher})'
+              : '';
+          final msg = 'La firma digital del instalador no es de confianza$publisher. '
+              'Puedes desactivar esta verificación en Ajustes → '
+              '"Verificar firma digital".';
+          _sessionSnapshot
+              .add(item.copyWith(status: 'failed', errorMessage: msg));
+          _failedCount++;
+          await consumer.failInstallation(item.id, msg);
+          return;
+        }
+        // AuthenticodeStatus.unknown: could not verify — warn but continue.
+        // Status desconocido: no se pudo verificar — avisar pero continuar.
       }
 
       List<String> args;

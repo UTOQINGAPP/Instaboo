@@ -1,3 +1,4 @@
+export 'authenticode/authenticode_infra.dart';
 export 'database/app/app_database_infra.dart';
 export 'filesystem/filesystem_infra.dart';
 export 'installer_detector/installer_detector_infra.dart';

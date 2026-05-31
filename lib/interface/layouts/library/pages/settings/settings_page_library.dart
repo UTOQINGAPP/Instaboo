@@ -46,6 +46,7 @@ const _settingLabels = <String, String>{
   'notifications_enabled': 'Notificaciones',
   'parallel_installs': 'Instalaciones en paralelo',
   'theme': 'Tema',
+  'verify_authenticode': 'Verificar firma digital',
 };
 
 // Descripciones en español para cada setting.
@@ -57,6 +58,7 @@ const _settingDescriptions = <String, String>{
   'notifications_enabled': 'Muestra notificaciones del sistema durante las instalaciones',
   'parallel_installs': 'Cantidad de instalaciones que pueden ejecutarse al mismo tiempo',
   'theme': 'Apariencia visual de la aplicación',
+  'verify_authenticode': 'Verifica la firma Authenticode antes de ejecutar cada instalador. Desactiva solo para instaladores legítimos sin firmar.',
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

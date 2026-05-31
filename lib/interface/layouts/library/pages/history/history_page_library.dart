@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:instaboo/core/rules/data/data_rules.dart';
@@ -478,43 +483,270 @@ class _HistoryContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final hasHostnames = viewState.availableHostnames.isNotEmpty;
+
+    void applyFilter(HistoryFilterState f) =>
+        ref.read(historyPageNotifierProvider.notifier).applyFilter(f);
+
+    // ── Right-panel content (filter + list) ──────────────────────────────────
+    Widget rightPanel = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _FilterBar(
+          filter: viewState.filter,
+          categories: viewState.categories,
+          packNames: viewState.packNames,
+          installerTypes: viewState.availableInstallerTypes,
+          hostnames: viewState.availableHostnames,
+          onChanged: applyFilter,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            if (viewState.filter.isActive)
+              Expanded(
+                child: _ResultBadge(
+                  count: viewState.filtered.length,
+                  total: viewState.allHistory.length,
+                ),
+              )
+            else
+              const Spacer(),
+            if (viewState.filtered.isNotEmpty)
+              TextButton.icon(
+                onPressed: () => _exportCsv(context, viewState.filtered),
+                icon: const Icon(Icons.download_outlined,
+                    size: 16, color: Colors.white70),
+                label: const Text(
+                  'Exportar CSV',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: viewState.filtered.isEmpty
+              ? _EmptyState(isFiltered: viewState.filter.isActive)
+              : _GroupedHistoryList(
+                  groupedByDate: viewState.groupedByDate,
+                  packNames: viewState.packNames,
+                ),
+        ),
+      ],
+    );
+
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Stats row ──────────────────────────────────────────────────────
+          // ── Stats row (always full width) ──────────────────────────────────
           _StatsRow(stats: viewState.stats),
           const SizedBox(height: 16),
 
-          // ── Filter bar ─────────────────────────────────────────────────────
-          _FilterBar(
-            filter: viewState.filter,
-            categories: viewState.categories,
-            packNames: viewState.packNames,
-            installerTypes: viewState.availableInstallerTypes,
-            hostnames: viewState.availableHostnames,
-            onChanged: (f) =>
-                ref.read(historyPageNotifierProvider.notifier).applyFilter(f),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Result count badge when filtered ──────────────────────────────
-          if (viewState.filter.isActive) ...[
-            _ResultBadge(
-              count: viewState.filtered.length,
-              total: viewState.allHistory.length,
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // ── Grouped list ───────────────────────────────────────────────────
+          // ── Two-panel layout ───────────────────────────────────────────────
           Expanded(
-            child: viewState.filtered.isEmpty
-                ? _EmptyState(isFiltered: viewState.filter.isActive)
-                : _GroupedHistoryList(
-                    groupedByDate: viewState.groupedByDate,
-                    packNames: viewState.packNames,
+            child: hasHostnames
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left: hostname panel
+                      _HostnamePanel(
+                        hostnames: viewState.availableHostnames,
+                        selected: viewState.filter.hostname,
+                        onSelected: (h) =>
+                            applyFilter(viewState.filter.copyWith(hostname: h)),
+                      ),
+                      const VerticalDivider(
+                          width: 1, color: Colors.white12),
+                      const SizedBox(width: 16),
+                      // Right: filters + list
+                      Expanded(child: rightPanel),
+                    ],
+                  )
+                : rightPanel,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── CSV export ───────────────────────────────────────────────────────────────
+
+/// Generates a CSV file from [items] and saves it to the user's Documents
+/// folder. Shows a SnackBar with the path on success or an error message.
+///
+/// Genera un CSV desde [items] y lo guarda en Documentos.
+/// Muestra un SnackBar con la ruta en éxito o un mensaje de error.
+Future<void> _exportCsv(
+    BuildContext context, List<HistoryDataRule> items) async {
+  final fmt = DateFormat('yyyy-MM-dd HH:mm:ss');
+  final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+
+  // Build CSV content first (synchronous, no await needed).
+  String esc(String? s) {
+    if (s == null || s.isEmpty) return '';
+    return '"${s.replaceAll('"', '""')}"';
+  }
+
+  final header = 'Software,Estado,Iniciado,Completado,Duración (s),Error,Equipo\n';
+  final rows = items.map((h) => [
+        esc(h.softwareName),
+        esc(h.status),
+        esc(fmt.format(h.startedAt.toLocal())),
+        esc(fmt.format(h.completedAt.toLocal())),
+        h.duration.inSeconds.toString(),
+        esc(h.errorDetails),
+        esc(h.hostname),
+      ].join(',')).join('\n');
+  final content = header + rows;
+
+  // Ask the user where to save via the native save dialog.
+  // Pide al usuario dónde guardar usando el diálogo de guardado nativo.
+  final savePath = await FilePicker.platform.saveFile(
+    dialogTitle: 'Guardar historial como CSV',
+    fileName: 'instaboo_historial_$ts.csv',
+    type: FileType.custom,
+    allowedExtensions: ['csv'],
+  );
+
+  if (savePath == null) return; // user cancelled
+
+  try {
+    // Write UTF-8 with BOM so Excel opens accents correctly on Windows.
+    // Escribe UTF-8 con BOM para que Excel abra acentos correctamente.
+    final bom = '﻿';
+    await File(savePath).writeAsString(bom + content, encoding: utf8);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('CSV guardado en: $savePath'),
+          backgroundColor: Colors.green.shade700,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+}
+
+// ─── Hostname panel ───────────────────────────────────────────────────────────
+
+/// Left-side panel that lists all hostnames found in history.
+/// Clicking a hostname filters the list; clicking again (or "Todos") clears it.
+///
+/// Panel izquierdo que lista los hostnames encontrados en el historial.
+class _HostnamePanel extends StatelessWidget {
+  final List<String> hostnames;
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+
+  const _HostnamePanel({
+    required this.hostnames,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget item({
+      required String label,
+      required bool isSelected,
+      required VoidCallback onTap,
+      IconData icon = Icons.computer,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.white.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: isSelected
+                ? Border.all(color: Colors.white24)
+                : null,
+          ),
+          child: Row(
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : Colors.white54),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: isSelected ? Colors.white : Colors.white70,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: 180,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 6),
+            child: Text(
+              'Equipos',
+              style: textTheme.labelSmall?.copyWith(
+                color: Colors.white38,
+                letterSpacing: 0.8,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // "Todos" entry
+          item(
+            label: 'Todos',
+            isSelected: selected == null,
+            icon: Icons.devices,
+            onTap: () => onSelected(null),
+          ),
+          const SizedBox(height: 4),
+          const Divider(color: Colors.white12, height: 1),
+          const SizedBox(height: 4),
+          // One entry per hostname
+          Expanded(
+            child: ListView.separated(
+              itemCount: hostnames.length,
+              separatorBuilder: (context, i) => const SizedBox(height: 2),
+              itemBuilder: (_, i) {
+                final h = hostnames[i];
+                return item(
+                  label: h,
+                  isSelected: selected == h,
+                  onTap: () => onSelected(selected == h ? null : h),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -845,15 +1077,7 @@ class _FilterBarState extends State<_FilterBar> {
                 ),
               ],
 
-              if (widget.hostnames.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                _DropdownFilter<String>(
-                  hint: 'Equipo',
-                  value: f.hostname,
-                  items: {for (final h in widget.hostnames) h: h},
-                  onChanged: (v) => _emit(f.copyWith(hostname: v)),
-                ),
-              ],
+              // Hostname filter moved to left-panel sidebar (see _HostnamePanel).
             ],
           ),
         ),

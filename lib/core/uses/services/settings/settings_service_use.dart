@@ -53,6 +53,14 @@ class SettingsServiceUse implements SettingsServiceRule {
           ),
         ),
         SettingsTableCompanion.insert(
+          prefKey: 'verify_authenticode',
+          prefValue: const Value('1'),
+          valueType: const Value('boolean'),
+          description: const Value(
+            'Verify Authenticode signature before running an installer. Disable to allow unsigned binaries. / Verificar firma Authenticode antes de ejecutar. Desactivar para permitir binarios sin firmar.',
+          ),
+        ),
+        SettingsTableCompanion.insert(
           prefKey: 'max_log_days',
           prefValue: const Value('30'),
           valueType: const Value('integer'),
